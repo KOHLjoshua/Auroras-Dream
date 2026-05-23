@@ -292,6 +292,28 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #profile-edit-modal{z-index:295;width:min(480px,92vw);}
 
 /* ══════════════════════════════════════════
+   SEARCH BAR
+══════════════════════════════════════════ */
+#search-bar{position:fixed;top:0;left:0;right:0;z-index:113;padding:68px 36px 16px;background:linear-gradient(to bottom,rgba(0,0,0,.78) 0%,rgba(0,0,0,.5) 100%);backdrop-filter:blur(20px);transform:translateY(-110%);transition:transform .38s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+#search-bar.open{transform:translateY(0);pointer-events:all;}
+.srch-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+#search-input{flex:1;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.14);border-radius:24px;padding:9px 18px;font-family:'Crimson Pro',serif;font-size:1rem;color:rgba(var(--tx-main),1);outline:none;transition:border-color .2s;}
+#search-input:focus{border-color:rgba(var(--tx-main),.32);}
+#search-input::placeholder{color:rgba(var(--tx-main),.3);}
+#search-close-btn{padding:8px 16px;border-radius:20px;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.12);font-family:'Caveat',cursive;font-size:.88rem;color:rgba(var(--tx-main),.6);cursor:pointer;transition:all .2s ease;white-space:nowrap;flex-shrink:0;}
+#search-close-btn:hover{background:rgba(var(--tx-main),.13);}
+.srch-tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.srch-tag{font-family:'Caveat',cursive;font-size:.76rem;padding:3px 11px;border-radius:20px;border:1px dashed rgba(var(--tx-main),.2);background:transparent;color:rgba(var(--tx-main),.52);cursor:pointer;transition:all .18s ease;}
+.srch-tag:hover{border-color:rgba(var(--tx-main),.38);color:rgba(var(--tx-main),.8);}
+.srch-tag.on{border-style:solid;border-color:var(--aur-1);color:rgba(var(--tx-main),.95);background:rgba(0,245,160,.08);}
+.srch-count{font-family:'Caveat',cursive;font-size:.8rem;color:rgba(var(--tx-main),.36);letter-spacing:.04em;min-height:16px;}
+
+/* ── Search icon in header ── */
+#search-btn{display:flex;align-items:center;gap:7px;padding:8px 18px;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.12);border-radius:24px;backdrop-filter:blur(16px);cursor:pointer;font-family:'Caveat',cursive;font-size:.95rem;color:rgba(var(--tx-main),.8);transition:all .25s ease;}
+#search-btn:hover{background:rgba(var(--tx-main),.14);border-color:rgba(var(--tx-main),.25);}
+#search-btn.active{color:var(--aur-1);border-color:var(--aur-1);}
+
+/* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
 #toast{position:fixed;bottom:112px;right:40px;z-index:400;background:var(--note-bg);border:1px solid rgba(var(--tx-main),.18);border-radius:8px;padding:11px 20px;font-family:'Caveat',cursive;font-size:.98rem;color:rgba(var(--tx-main),.9);backdrop-filter:blur(22px);transform:translateY(18px);opacity:0;transition:all .3s ease;pointer-events:none;}
@@ -342,10 +364,21 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
     </div>
     <div class="hd-right">
       <span class="time-chip" id="time-chip">✦ night</span><span id="rt-dot" title="live — updates in real time"></span>
+      <button id="search-btn">✦ <span>Search</span></button>
       <button id="stargaze-btn">✦ <span>Stargaze</span></button>
       <div id="hd-auth"></div>
     </div>
   </header>
+
+  <!-- Search bar -->
+  <div id="search-bar">
+    <div class="srch-row">
+      <input id="search-input" type="search" placeholder="search posts, writers, moods…" autocomplete="off" spellcheck="false">
+      <button id="search-close-btn">✕ close</button>
+    </div>
+    <div class="srch-tag-row" id="srch-tag-row"></div>
+    <div class="srch-count" id="srch-count"></div>
+  </div>
 
   <div id="filter-badge"></div>
   <div id="board"></div>
@@ -978,12 +1011,51 @@ function mkNote(post,idx){
 }
 
 let currentFilter='all',expandedEl=null;
+let searchQuery='',searchActiveTags=[],searchOpen=false;
 const board=document.getElementById('board');
+
+// ── Search ────────────────────────────────────────────────────────
+function openSearch(){
+  searchOpen=true;
+  document.getElementById('search-bar').classList.add('open');
+  document.getElementById('search-btn').classList.add('active');
+  buildSearchTagChips();
+  setTimeout(()=>document.getElementById('search-input').focus(),380);
+}
+function closeSearch(){
+  searchOpen=false;searchQuery='';searchActiveTags=[];
+  document.getElementById('search-bar').classList.remove('open');
+  document.getElementById('search-btn').classList.remove('active');
+  document.getElementById('search-input').value='';
+  document.getElementById('srch-count').textContent='';
+  render();
+}
+function buildSearchTagChips(){
+  const row=document.getElementById('srch-tag-row');row.innerHTML='';
+  const freq={};posts.forEach(p=>(p.moods||[]).forEach(m=>freq[m]=(freq[m]||0)+1));
+  Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,18).forEach(([tag])=>{
+    const c=document.createElement('div');c.className='srch-tag'+(searchActiveTags.includes(tag)?' on':'');c.textContent=tag;
+    c.addEventListener('click',()=>{
+      if(searchActiveTags.includes(tag)){searchActiveTags=searchActiveTags.filter(t=>t!==tag);c.classList.remove('on');}
+      else{searchActiveTags.push(tag);c.classList.add('on');}
+      render();
+    });
+    row.appendChild(c);
+  });
+}
 
 function render(){
   board.innerHTML='';
-  const fp=currentFilter==='all'?posts:posts.filter(p=>p.cat===currentFilter);
-  if(!fp.length){board.innerHTML=`<div class="empty-state"><div>✦</div><div>nothing here yet…</div></div>`;return;}
+  let fp=currentFilter==='all'?posts:posts.filter(p=>p.cat===currentFilter);
+  if(searchOpen){
+    const q=searchQuery.toLowerCase().trim();
+    if(q)fp=fp.filter(p=>(p.title||'').toLowerCase().includes(q)||(p.body||'').toLowerCase().includes(q)||p.author.toLowerCase().includes(q)||(p.moods||[]).some(m=>m.toLowerCase().includes(q)));
+    if(searchActiveTags.length)fp=fp.filter(p=>searchActiveTags.some(t=>(p.moods||[]).includes(t)));
+    const cntEl=document.getElementById('srch-count');
+    if(cntEl)cntEl.textContent=(q||searchActiveTags.length)?`${fp.length} note${fp.length!==1?'s':''} found`:'';
+  }
+  const emptyMsg=searchOpen&&(searchQuery||searchActiveTags.length)?'nothing matched…':'nothing here yet…';
+  if(!fp.length){board.innerHTML=`<div class="empty-state"><div>✦</div><div>${emptyMsg}</div></div>`;return;}
   let maxY=0;
   fp.forEach((post,i)=>{
     const el=mkNote(post,i);board.appendChild(el);
@@ -991,7 +1063,7 @@ function render(){
   });
   if(window.innerWidth>768){
     board.style.minHeight=`${maxY+200}px`;
-    if(hasMorePosts&&!DEMO_MODE&&sb){
+    if(hasMorePosts&&!DEMO_MODE&&sb&&!searchOpen){
       const btn=document.createElement('button');btn.id='load-more-btn';btn.textContent='float deeper ✦';
       btn.style.top=`${maxY+70}px`;btn.addEventListener('click',loadMorePosts);board.appendChild(btn);
     }
@@ -1213,6 +1285,20 @@ sgBtn.addEventListener('click',()=>{
   function step(){const notes=[...document.querySelectorAll('.note')];if(!notes.length)return;notes.forEach((n,i)=>{n.style.opacity=i===sgIdx%notes.length?'1':'0.2';n.style.filter=i===sgIdx%notes.length?'none':'blur(1px)';});notes[sgIdx%notes.length]?.scrollIntoView({behavior:'smooth',block:'center'});sgIdx++;}
   step();sgTimer=setInterval(step,3200);
   setTimeout(()=>document.addEventListener('click',function stopSg(e){if(!e.target.closest('#stargaze-btn')){stargazing=false;sgBtn.classList.remove('active');sgBtn.querySelector('span').textContent='Stargaze';clearInterval(sgTimer);document.querySelectorAll('.note').forEach(n=>{n.style.opacity='';n.style.filter='';});document.removeEventListener('click',stopSg);}}),100);
+});
+
+// ── Search wiring ─────────────────────────────────────────────────
+document.getElementById('search-btn').addEventListener('click',()=>{searchOpen?closeSearch():openSearch();});
+document.getElementById('search-close-btn').addEventListener('click',closeSearch);
+document.getElementById('search-input').addEventListener('input',e=>{
+  searchQuery=e.target.value;render();
+});
+document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='/'&&!anyModalOpen()&&!searchOpen&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){
+    e.preventDefault();openSearch();
+  }
+  if(e.key==='Escape'&&searchOpen)closeSearch();
 });
 
 // ── Write modal ──────────────────────────────────────────────────
