@@ -17,6 +17,6 @@
 // ================================================================
 
 window.AURORA_CONFIG = {
-  supabaseUrl: 'YOUR_SUPABASE_PROJECT_URL',   // e.g. https://xxxx.supabase.co
-  supabaseKey: 'YOUR_SUPABASE_ANON_PUBLIC_KEY' // starts with eyJ...
+  supabaseUrl: 'https://wqhacxnqnsflgwevkaou.supabase.co',   // e.g. https://xxxx.supabase.co
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxaGFjeG5xbnNmbGd3ZXZrYW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MzM4NjcsImV4cCI6MjA5NTEwOTg2N30.R5cDNFed3yRBFHSq3U2kWbqGNYbUJO5TTJX4318qCWM' // starts with eyJ...
 };
