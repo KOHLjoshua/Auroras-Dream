@@ -1,0 +1,19 @@
+# User credentials — copy config.example.js → config.js and fill in your keys
+config.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node (if a dev server is added later)
+node_modules/
