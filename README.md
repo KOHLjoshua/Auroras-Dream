@@ -89,6 +89,8 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
 | 4 | ✅ Done | Audio recording (MediaRecorder API), real waveform viz, Supabase Storage upload |
 | 5 | ✅ Done | User profiles, shareable post URLs (#post/id), client-side hash routing |
 | 6 | ✅ Done | Full-text search (title, body, author, moods) + mood tag filtering |
+| 7 | ✅ Done | In-session notifications (bell + panel), owner moderation dashboard |
+| 8 | ✅ Done | Settings panel (theme, notifications, password), PWA (manifest + service worker), accessibility |
 | 4 | ⬜ | Audio recording + upload + real waveform |
 | 5 | ⬜ | User profiles, shareable post URLs, routing |
 | 6 | ⬜ | Full-text search, tag-based filtering |

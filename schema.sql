@@ -137,6 +137,17 @@ CREATE POLICY "comments_delete" ON comments
   );
 
 -- ================================================================
+-- Allow owners to update any profile's role (moderation dashboard)
+-- Run this if you use the moderation panel's role selector.
+-- ================================================================
+DROP POLICY IF EXISTS "profiles_update" ON profiles;
+CREATE POLICY "profiles_update" ON profiles
+  FOR UPDATE USING (
+    auth.uid() = id
+    OR EXISTS (SELECT 1 FROM profiles p2 WHERE p2.id = auth.uid() AND p2.role = 'owner')
+  );
+
+-- ================================================================
 -- Realtime — enable live updates for reactions, comments, and posts
 -- ================================================================
 ALTER PUBLICATION supabase_realtime ADD TABLE posts, reactions, comments;

@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aurora Notes — your inner world matters and deserves space</title>
 <meta name="description" content="A creative writing sanctuary for poems, stories, thoughts, and audio recordings.">
+<meta name="theme-color" content="#00f5a0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -314,6 +318,70 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #search-btn.active{color:var(--aur-1);border-color:var(--aur-1);}
 
 /* ══════════════════════════════════════════
+   NOTIFICATIONS
+══════════════════════════════════════════ */
+#notif-btn{position:relative;display:flex;align-items:center;gap:7px;padding:8px 18px;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.12);border-radius:24px;backdrop-filter:blur(16px);cursor:pointer;font-family:'Caveat',cursive;font-size:.95rem;color:rgba(var(--tx-main),.8);transition:all .25s ease;}
+#notif-btn:hover{background:rgba(var(--tx-main),.14);}
+#notif-btn.active{color:var(--aur-1);border-color:var(--aur-1);}
+#notif-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--aur-3);color:#fff;font-size:.72rem;font-family:'Caveat',cursive;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;pointer-events:none;}
+#notif-badge.vis{opacity:1;}
+@keyframes bell-ring{0%,100%{transform:rotate(0)}15%{transform:rotate(12deg)}30%{transform:rotate(-10deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}}
+#notif-btn.ringing{animation:bell-ring .55s ease;}
+#notif-panel{position:fixed;top:72px;right:40px;width:330px;max-height:460px;background:var(--note-bg);border:1px solid rgba(var(--tx-main),.13);border-radius:8px;backdrop-filter:blur(28px);box-shadow:0 12px 50px rgba(0,0,0,.55),0 0 36px var(--glow);z-index:280;opacity:0;pointer-events:none;transform:translateY(-10px) scale(.96);transition:all .3s cubic-bezier(.34,1.56,.64,1);overflow:hidden;display:flex;flex-direction:column;}
+#notif-panel.open{opacity:1;pointer-events:all;transform:translateY(0) scale(1);}
+.np-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid rgba(var(--tx-main),.07);flex-shrink:0;}
+.np-title{font-family:'Caveat',cursive;font-size:1.05rem;color:rgba(var(--tx-main),.85);}
+.np-clear{font-family:'Caveat',cursive;font-size:.78rem;color:rgba(var(--tx-main),.38);cursor:pointer;padding:3px 9px;border-radius:12px;transition:all .18s ease;}
+.np-clear:hover{background:rgba(var(--tx-main),.08);color:rgba(var(--tx-main),.7);}
+#notif-list{overflow-y:auto;flex:1;}
+#notif-list::-webkit-scrollbar{width:3px;}#notif-list::-webkit-scrollbar-thumb{background:rgba(var(--tx-main),.15);border-radius:2px;}
+.ni{display:flex;gap:10px;padding:11px 16px;transition:background .15s;}
+.ni:hover{background:rgba(var(--tx-main),.04);}
+.ni-icon{font-size:1.05rem;flex-shrink:0;margin-top:2px;}
+.ni-body{flex:1;min-width:0;}
+.ni-msg{font-size:.88rem;color:rgba(var(--tx-main),.75);line-height:1.45;}
+.ni-msg b{color:rgba(var(--tx-main),1);}
+.ni-time{font-family:'Caveat',cursive;font-size:.73rem;color:rgba(var(--tx-main),.32);margin-top:2px;}
+.np-empty{text-align:center;padding:32px 16px;font-family:'Caveat',cursive;font-size:.95rem;color:rgba(var(--tx-main),.3);}
+
+/* ══════════════════════════════════════════
+   MODERATION PANEL
+══════════════════════════════════════════ */
+#mod-panel{position:fixed;inset:0;z-index:152;overflow-y:auto;padding:100px 36px 120px;background:rgba(5,8,24,.9);opacity:0;pointer-events:none;transition:opacity .4s ease;}
+#mod-panel.vis{opacity:1;pointer-events:all;}
+.mod-head{max-width:820px;margin:0 auto 24px;display:flex;align-items:center;gap:18px;}
+.mod-title{font-family:'Caveat',cursive;font-size:1.75rem;color:rgba(var(--tx-main),.9);}
+.mod-tabs{display:flex;gap:0;border-bottom:1px solid rgba(var(--tx-main),.1);max-width:820px;margin:0 auto 22px;}
+.mod-tab{font-family:'Caveat',cursive;font-size:1.05rem;padding:8px 22px;cursor:pointer;color:rgba(var(--tx-main),.4);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s ease;}
+.mod-tab.active{color:var(--aur-1);border-bottom-color:var(--aur-1);}
+#mod-body{max-width:820px;margin:0 auto;}
+.mod-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(var(--tx-main),.05);}
+.mod-av{font-size:1.3rem;flex-shrink:0;}
+.mod-info{flex:1;min-width:0;}
+.mod-row-name{font-family:'Caveat',cursive;font-size:1.05rem;color:rgba(var(--tx-main),.88);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mod-row-sub{font-size:.8rem;color:rgba(var(--tx-main),.42);margin-top:2px;}
+.mod-role-sel{font-family:'Caveat',cursive;font-size:.85rem;padding:5px 10px;border-radius:12px;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.13);color:rgba(var(--tx-main),.72);cursor:pointer;transition:all .2s;}
+.mod-del-btn{padding:5px 12px;border-radius:12px;background:transparent;border:1px solid rgba(255,100,100,.22);font-family:'Caveat',cursive;font-size:.82rem;color:rgba(255,130,130,.7);cursor:pointer;transition:all .2s;flex-shrink:0;}
+.mod-del-btn:hover{background:rgba(255,80,80,.08);border-color:rgba(255,100,100,.42);}
+
+/* ══════════════════════════════════════════
+   SETTINGS PANEL
+══════════════════════════════════════════ */
+#settings-modal{z-index:295;width:min(480px,92vw);}
+.st-section{margin-bottom:20px;}
+.st-label{font-family:'Caveat',cursive;font-size:.78rem;color:rgba(var(--tx-main),.38);letter-spacing:.07em;margin-bottom:9px;text-transform:uppercase;}
+.theme-opts{display:flex;gap:8px;flex-wrap:wrap;}
+.theme-opt{padding:6px 16px;border-radius:20px;border:1px solid rgba(var(--tx-main),.12);background:rgba(var(--tx-main),.05);color:rgba(var(--tx-main),.65);font-family:'Caveat',cursive;font-size:.9rem;cursor:pointer;transition:all .2s ease;}
+.theme-opt:hover,.theme-opt.sel{border-color:var(--aur-1);color:rgba(var(--tx-main),1);background:rgba(var(--tx-main),.09);}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(var(--tx-main),.04);border-radius:6px;}
+.notif-row-lbl{font-size:.9rem;color:rgba(var(--tx-main),.7);}
+.toggle-btn{padding:6px 14px;border-radius:20px;font-family:'Caveat',cursive;font-size:.84rem;cursor:pointer;border:1px solid;transition:all .2s ease;}
+.toggle-btn.on{background:rgba(0,245,160,.12);border-color:rgba(0,245,160,.3);color:rgba(var(--tx-main),.9);}
+.toggle-btn.off{background:rgba(var(--tx-main),.05);border-color:rgba(var(--tx-main),.12);color:rgba(var(--tx-main),.5);}
+.pw-row{display:flex;gap:8px;align-items:center;}
+.pw-row .m-field{margin-bottom:0;flex:1;}
+
+/* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
 #toast{position:fixed;bottom:112px;right:40px;z-index:400;background:var(--note-bg);border:1px solid rgba(var(--tx-main),.18);border-radius:8px;padding:11px 20px;font-family:'Caveat',cursive;font-size:.98rem;color:rgba(var(--tx-main),.9);backdrop-filter:blur(22px);transform:translateY(18px);opacity:0;transition:all .3s ease;pointer-events:none;}
@@ -364,8 +432,9 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
     </div>
     <div class="hd-right">
       <span class="time-chip" id="time-chip">✦ night</span><span id="rt-dot" title="live — updates in real time"></span>
-      <button id="search-btn">✦ <span>Search</span></button>
-      <button id="stargaze-btn">✦ <span>Stargaze</span></button>
+      <button id="search-btn" aria-label="Search">✦ <span>Search</span></button>
+      <button id="notif-btn" aria-label="Notifications">🔔<span id="notif-badge"></span></button>
+      <button id="stargaze-btn" aria-label="Stargaze mode">✦ <span>Stargaze</span></button>
       <div id="hd-auth"></div>
     </div>
   </header>
@@ -380,9 +449,19 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
     <div class="srch-count" id="srch-count"></div>
   </div>
 
+  <!-- Notification panel -->
+  <div id="notif-panel" role="dialog" aria-label="Notifications">
+    <div class="np-head">
+      <span class="np-title">✦ notifications</span>
+      <span class="np-clear" id="np-clear">clear all</span>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+
   <div id="filter-badge"></div>
   <div id="board"></div>
   <div id="profile-view"></div>
+  <div id="mod-panel"></div>
 
   <!-- Compass -->
   <div id="compass">
@@ -504,8 +583,39 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
     </div>
   </div>
 
+  <!-- Settings modal -->
+  <div id="settings-modal" class="modal-base" role="dialog" aria-label="Settings">
+    <div class="modal-title">settings</div>
+    <div class="st-section">
+      <div class="st-label">theme</div>
+      <div class="theme-opts">
+        <div class="theme-opt" data-th="auto">✦ auto</div>
+        <div class="theme-opt" data-th="night">🌙 night</div>
+        <div class="theme-opt" data-th="dawn">🌅 dawn</div>
+        <div class="theme-opt" data-th="day">☀ day</div>
+      </div>
+    </div>
+    <div class="st-section">
+      <div class="st-label">browser notifications</div>
+      <div class="notif-row">
+        <span class="notif-row-lbl">notify me of reactions &amp; whispers</span>
+        <button class="toggle-btn off" id="notif-perm-btn">enable</button>
+      </div>
+    </div>
+    <div class="st-section" id="pw-section">
+      <div class="st-label">change password</div>
+      <div class="pw-row">
+        <input class="m-field" id="new-pw-in" type="password" placeholder="new password (min 8 chars)">
+        <button class="btn-pub" id="pw-save-btn" style="white-space:nowrap">update ✦</button>
+      </div>
+    </div>
+    <div class="m-actions" style="margin-top:8px;">
+      <button class="btn-c" id="settings-cancel-btn">close</button>
+    </div>
+  </div>
+
   <div id="demo-banner">✦ demo mode — set up config.js to enable auth &amp; persistence</div>
-  <div id="toast"></div>
+  <div id="toast" role="alert" aria-live="assertive"></div>
 </div>
 
 <script src="config.js" onerror="window.AURORA_CONFIG=null"></script>
@@ -649,10 +759,13 @@ async function fetchProfile(uid){if(!sb)return null;const{data}=await sb.from('p
 function updateAuthUI(){
   const el=document.getElementById('hd-auth');if(!el)return;
   if(currentProfile){
-    el.innerHTML=`<div class="user-chip" id="user-chip"><span class="user-chip-av">${currentProfile.avatar}</span><span>${currentProfile.pen_name}</span><span class="user-chip-arr">▾</span><div class="user-dropdown" id="user-dd"><div class="ud-item" id="myprofile-ud">my profile</div><div class="ud-item danger" id="signout-ud">sign out</div></div></div>`;
+    const ownerItem=currentProfile.role==='owner'?`<div class="ud-item" id="mod-ud">moderation</div>`:'';
+    el.innerHTML=`<div class="user-chip" id="user-chip"><span class="user-chip-av">${currentProfile.avatar}</span><span>${currentProfile.pen_name}</span><span class="user-chip-arr">▾</span><div class="user-dropdown" id="user-dd"><div class="ud-item" id="myprofile-ud">my profile</div><div class="ud-item" id="settings-ud">settings</div>${ownerItem}<div class="ud-item danger" id="signout-ud">sign out</div></div></div>`;
     const chip=document.getElementById('user-chip'),dd=document.getElementById('user-dd');
     chip.addEventListener('click',e=>{e.stopPropagation();dd.classList.toggle('open');});
     document.getElementById('myprofile-ud').addEventListener('click',e=>{e.stopPropagation();dd.classList.remove('open');showProfile(currentProfile.pen_name);});
+    document.getElementById('settings-ud').addEventListener('click',e=>{e.stopPropagation();dd.classList.remove('open');openSettingsModal();});
+    if(currentProfile.role==='owner')document.getElementById('mod-ud').addEventListener('click',e=>{e.stopPropagation();dd.classList.remove('open');openModPanel();});
     document.getElementById('signout-ud').addEventListener('click',e=>{e.stopPropagation();doSignOut();});
     setTimeout(()=>document.addEventListener('click',()=>dd?.classList.remove('open'),{once:true}),0);
   }else{
@@ -661,6 +774,105 @@ function updateAuthUI(){
   }
 }
 async function doSignOut(){if(!sb)return;await sb.auth.signOut();toast('see you in the space ✦');}
+
+// ── Notifications ─────────────────────────────────────────────────
+let notifs=[],unreadNotifs=0;
+function addNotif(icon,msg){
+  notifs.unshift({icon,msg,ts:Date.now()});if(notifs.length>30)notifs.pop();
+  unreadNotifs++;updateNotifBadge();
+  const btn=document.getElementById('notif-btn');
+  if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),650);}
+  // Browser notification if permitted
+  if(Notification?.permission==='granted')new Notification('Aurora Notes',{body:msg.replace(/<[^>]*>/g,''),icon:'',silent:true});
+}
+function updateNotifBadge(){
+  const badge=document.getElementById('notif-badge');if(!badge)return;
+  badge.textContent=unreadNotifs>9?'9+':unreadNotifs;
+  badge.classList.toggle('vis',unreadNotifs>0);
+}
+function openNotifPanel(){
+  renderNotifList();
+  document.getElementById('notif-panel').classList.add('open');
+  document.getElementById('notif-btn').classList.add('active');
+  notifs.forEach(n=>n.unread=false);unreadNotifs=0;updateNotifBadge();
+}
+function closeNotifPanel(){
+  document.getElementById('notif-panel').classList.remove('open');
+  document.getElementById('notif-btn').classList.remove('active');
+}
+function renderNotifList(){
+  const list=document.getElementById('notif-list');
+  if(!notifs.length){list.innerHTML='<div class="np-empty">all quiet in the space ✦</div>';return;}
+  list.innerHTML=notifs.map(n=>`<div class="ni"><div class="ni-icon">${n.icon}</div><div class="ni-body"><div class="ni-msg">${n.msg}</div><div class="ni-time">${timeAgo(new Date(n.ts))}</div></div></div>`).join('');
+}
+
+// ── Moderation ────────────────────────────────────────────────────
+async function openModPanel(){
+  if(!isOwner())return;
+  const panel=document.getElementById('mod-panel');
+  panel.innerHTML=`<div style="text-align:center;padding:60px 0;font-family:'Caveat',cursive;color:rgba(var(--tx-main),.4);">gathering the constellations…</div>`;
+  panel.classList.add('vis');
+  const[{data:allPosts},{data:allUsers}]=await Promise.all([
+    sb.from('posts').select('id,title,body,type,author_id,created_at,author:profiles!author_id(pen_name,avatar)').order('created_at',{ascending:false}).limit(100),
+    sb.from('profiles').select('*').order('created_at',{ascending:false})
+  ]);
+  renderModPanel(allPosts||[],allUsers||[]);
+}
+function renderModPanel(allPosts,allUsers){
+  const panel=document.getElementById('mod-panel');
+  panel.innerHTML=`
+    <div class="mod-head"><button class="pv-back" id="mod-back">← back</button><div class="mod-title">✦ moderation</div></div>
+    <div class="mod-tabs">
+      <div class="mod-tab active" data-t="posts">posts (${allPosts.length})</div>
+      <div class="mod-tab" data-t="writers">writers (${allUsers.length})</div>
+    </div>
+    <div id="mod-body"></div>`;
+  document.getElementById('mod-back').addEventListener('click',closeModPanel);
+  const tabs=panel.querySelectorAll('.mod-tab');
+  tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');t.dataset.t==='posts'?renderModPosts(allPosts):renderModUsers(allUsers);}));
+  renderModPosts(allPosts);
+}
+function renderModPosts(allPosts){
+  const body=document.getElementById('mod-body');
+  if(!allPosts.length){body.innerHTML='<div class="np-empty">no posts yet</div>';return;}
+  body.innerHTML=allPosts.map(p=>`<div class="mod-row" data-id="${p.id}"><div class="mod-av">${p.author?.avatar||'🌙'}</div><div class="mod-info"><div class="mod-row-name">${p.title||(p.body||'').slice(0,70)+'…'}</div><div class="mod-row-sub">by ${p.author?.pen_name||'?'} · ${p.type} · ${timeAgo(new Date(p.created_at))}</div></div><button class="mod-del-btn" data-id="${p.id}">✕ delete</button></div>`).join('');
+  body.querySelectorAll('.mod-del-btn').forEach(btn=>btn.addEventListener('click',async()=>{
+    const id=parseInt(btn.dataset.id);await deletePost(id);btn.closest('.mod-row').remove();
+  }));
+}
+function renderModUsers(allUsers){
+  const body=document.getElementById('mod-body');
+  if(!allUsers.length){body.innerHTML='<div class="np-empty">no writers yet</div>';return;}
+  body.innerHTML=allUsers.map(u=>`<div class="mod-row"><div class="mod-av">${u.avatar}</div><div class="mod-info"><div class="mod-row-name">${u.pen_name}</div><div class="mod-row-sub">joined ${timeAgo(new Date(u.created_at))}</div></div><select class="mod-role-sel" data-uid="${u.id}" ${u.id===currentUser?.id?'disabled':''}><option value="reader"${u.role==='reader'?' selected':''}>reader</option><option value="writer"${u.role==='writer'?' selected':''}>writer</option><option value="owner"${u.role==='owner'?' selected':''}>owner</option></select></div>`).join('');
+  body.querySelectorAll('.mod-role-sel').forEach(sel=>{
+    const orig=sel.value;
+    sel.addEventListener('change',async()=>{
+      const{error}=await sb.from('profiles').update({role:sel.value}).eq('id',sel.dataset.uid);
+      if(error){toast('could not update role ✦');sel.value=orig;}else toast('role updated ✦');
+    });
+  });
+}
+function closeModPanel(){document.getElementById('mod-panel').classList.remove('vis');}
+
+// ── Settings ──────────────────────────────────────────────────────
+let themePref=localStorage.getItem('aurora-theme')||'auto';
+function applyThemePref(){if(themePref!=='auto'){tod=themePref;applyPal(PAL[tod]);}}
+applyThemePref();
+
+function openSettingsModal(){
+  // Sync theme buttons
+  document.querySelectorAll('.theme-opt').forEach(o=>o.classList.toggle('sel',o.dataset.th===themePref));
+  // Sync notif button
+  const nb=document.getElementById('notif-perm-btn');
+  if(nb){const granted=Notification?.permission==='granted';nb.classList.toggle('on',granted);nb.classList.toggle('off',!granted);nb.textContent=granted?'enabled':'enable';}
+  // Show/hide password section (only if logged in + live mode)
+  document.getElementById('pw-section').style.display=(currentUser&&!DEMO_MODE)?'':'none';
+  document.getElementById('settings-modal').classList.add('open');overlay.classList.add('on');
+}
+function closeSettingsModal(){
+  document.getElementById('settings-modal').classList.remove('open');
+  if(!anyModalOpen()&&!document.getElementById('auth-modal').classList.contains('open'))overlay.classList.remove('on');
+}
 
 // ── Realtime ──────────────────────────────────────────────────────
 let rtChannel=null;
@@ -684,6 +896,7 @@ function handleRxnInsert(row){
   post.rxn[row.emoji]=(post.rxn[row.emoji]||0)+1;
   const btn=document.querySelector(`.rxn[data-e="${row.emoji}"][data-id="${row.post_id}"]`);
   if(btn){btn.querySelector('.rxn-n').textContent=post.rxn[row.emoji]||'';btn.style.transform='scale(1.2)';setTimeout(()=>btn.style.transform='',200);}
+  if(post.authorId===currentUser?.id)addNotif(row.emoji,`someone reacted ${row.emoji} to <b>${post.title||'your post'}</b>`);
 }
 
 function handleRxnDelete(row){
@@ -700,6 +913,7 @@ async function handleCommentInsert(row){
   const{data:profile}=await sb.from('profiles').select('pen_name,avatar').eq('id',row.author_id).maybeSingle();
   const nc={id:row.id,av:profile?.avatar||'🌸',author:profile?.pen_name||'someone',text:row.body};
   post.comments.push(nc);
+  if(post.authorId===currentUser?.id)addNotif(nc.av,`<b>${nc.author}</b> whispered on <b>${post.title||'your post'}</b>`);
   if(expandedEl&&parseInt(expandedEl.dataset.id)===row.post_id){
     const wl=expandedEl.querySelector('.whispers');
     if(wl){const nw=document.createElement('div');nw.className='whisper';nw.innerHTML=`<div class="whisper-av">${nc.av}</div><div class="whisper-body"><div class="whisper-author">${nc.author}</div><div class="whisper-text">${nc.text}</div></div>`;wl.insertBefore(nw,wl.querySelector('.add-whisper'));}
@@ -735,7 +949,7 @@ const overlay=document.getElementById('overlay');
 function openAuthModal(tab='in'){if(DEMO_MODE){toast('configure Supabase in config.js to enable auth ✦');return;}switchAuthTab(tab);document.getElementById('auth-modal').classList.add('open');overlay.classList.add('on');}
 function closeAuthModal(){document.getElementById('auth-modal').classList.remove('open');if(!anyModalOpen())overlay.classList.remove('on');}
 function switchAuthTab(tab){document.querySelectorAll('.auth-tab').forEach(t=>t.classList.toggle('active',t.dataset.t===tab));document.getElementById('auth-panel-in').style.display=tab==='in'?'':'none';document.getElementById('auth-panel-up').style.display=tab==='up'?'':'none';}
-function anyModalOpen(){return['write-modal','edit-modal','confirm-dialog','profile-edit-modal'].some(id=>document.getElementById(id).classList.contains('open'));}
+function anyModalOpen(){return['write-modal','edit-modal','confirm-dialog','profile-edit-modal','settings-modal'].some(id=>document.getElementById(id).classList.contains('open'));}
 
 // ── Data ─────────────────────────────────────────────────────────
 async function loadPosts(){
@@ -1261,6 +1475,7 @@ overlay.addEventListener('click',()=>{
   if(document.getElementById('confirm-dialog').classList.contains('open')){closeConfirm();return;}
   if(document.getElementById('auth-modal').classList.contains('open')){closeAuthModal();return;}
   if(document.getElementById('profile-edit-modal').classList.contains('open')){closeProfileEdit();return;}
+  if(document.getElementById('settings-modal').classList.contains('open')){closeSettingsModal();return;}
   if(document.getElementById('edit-modal').classList.contains('open')){closeEditModal();return;}
   if(document.getElementById('write-modal').classList.contains('open')){closeModal();return;}
   collapseNote();
@@ -1391,6 +1606,38 @@ document.getElementById('su-btn').addEventListener('click',async()=>{
   btn.disabled=false;btn.textContent='join the space ✦';closeAuthModal();toast(`welcome, ${name} ✦`);
 });
 
+// ── Notification button ───────────────────────────────────────────
+document.getElementById('notif-btn').addEventListener('click',e=>{
+  e.stopPropagation();
+  document.getElementById('notif-panel').classList.contains('open')?closeNotifPanel():openNotifPanel();
+});
+document.getElementById('np-clear').addEventListener('click',()=>{notifs=[];unreadNotifs=0;updateNotifBadge();renderNotifList();});
+document.addEventListener('click',e=>{if(!e.target.closest('#notif-panel')&&!e.target.closest('#notif-btn'))closeNotifPanel();});
+
+// ── Settings modal handlers ───────────────────────────────────────
+document.getElementById('settings-cancel-btn').addEventListener('click',closeSettingsModal);
+document.querySelectorAll('.theme-opt').forEach(opt=>opt.addEventListener('click',()=>{
+  themePref=opt.dataset.th;localStorage.setItem('aurora-theme',themePref);
+  document.querySelectorAll('.theme-opt').forEach(o=>o.classList.toggle('sel',o.dataset.th===themePref));
+  if(themePref==='auto'){tod=getToD();}else{tod=themePref;}applyPal(PAL[tod]);
+}));
+document.getElementById('notif-perm-btn').addEventListener('click',async()=>{
+  if(Notification?.permission==='granted'){toast('browser notifications already enabled ✦');return;}
+  const perm=await Notification?.requestPermission().catch(()=>'denied');
+  const granted=perm==='granted';
+  const nb=document.getElementById('notif-perm-btn');
+  nb.classList.toggle('on',granted);nb.classList.toggle('off',!granted);nb.textContent=granted?'enabled':'enable';
+  toast(granted?'browser notifications enabled ✦':'permission denied ✦');
+});
+document.getElementById('pw-save-btn').addEventListener('click',async()=>{
+  if(!sb)return;const pw=document.getElementById('new-pw-in').value;
+  if(pw.length<8){toast('password needs at least 8 characters ✦');return;}
+  const btn=document.getElementById('pw-save-btn');btn.disabled=true;btn.textContent='saving…';
+  const{error}=await sb.auth.updateUser({password:pw});
+  btn.disabled=false;btn.textContent='update ✦';
+  if(error)toast('could not update password ✦');else{document.getElementById('new-pw-in').value='';toast('password updated ✦');}
+});
+
 // ── Profile edit modal handlers ───────────────────────────────────
 const peAvRow=document.getElementById('pe-av-row');
 AVATARS.forEach(av=>{const d=document.createElement('div');d.className='av-opt'+(av===peSelAv?' sel':'');d.textContent=av;d.addEventListener('click',()=>{peAvRow.querySelectorAll('.av-opt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');peSelAv=av;});peAvRow.appendChild(d);});
@@ -1402,6 +1649,8 @@ const toastEl=document.getElementById('toast');let toastTimer=null;
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),3100);}
 
 // ── Init ──────────────────────────────────────────────────────────
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
 document.fonts.ready.then(async()=>{
   await initAuth();await loadPosts();
   setTimeout(()=>{const ld=document.getElementById('loading');ld.classList.add('gone');setTimeout(()=>ld.remove(),1300);router();},2000);
