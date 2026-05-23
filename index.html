@@ -238,6 +238,30 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #rt-dot.live{opacity:.65;animation:rt-pulse 3s ease-in-out infinite;}
 @keyframes rt-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,245,160,.45);}55%{box-shadow:0 0 0 5px rgba(0,245,160,0);}}
 
+/* ── Audio recorder (write modal) ── */
+#audio-rec-panel{display:none;margin-bottom:14px;padding:16px;background:rgba(var(--tx-main),.03);border:1px solid rgba(var(--tx-main),.08);border-radius:6px;}
+#audio-rec-panel.vis{display:block;}
+.rec-viz{height:58px;background:rgba(var(--tx-main),.03);border-radius:4px;margin-bottom:12px;overflow:hidden;position:relative;}
+#rec-canvas{position:absolute;inset:0;width:100%;height:100%;}
+.rec-row{display:flex;align-items:center;gap:12px;}
+#rec-btn{display:flex;align-items:center;gap:7px;padding:8px 20px;border-radius:24px;border:1px solid;font-family:'Caveat',cursive;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .25s ease;}
+#rec-btn.idle{background:rgba(var(--tx-main),.06);border-color:rgba(var(--tx-main),.14);color:rgba(var(--tx-main),.75);}
+#rec-btn.idle:hover{background:rgba(var(--tx-main),.13);}
+#rec-btn.recording{background:linear-gradient(135deg,#ff6b6b,#ee5252);color:#fff;border-color:transparent;animation:rec-pulse 1.2s ease-in-out infinite;}
+#rec-btn.has-rec{background:rgba(0,245,160,.1);border-color:rgba(0,245,160,.3);color:rgba(var(--tx-main),.85);}
+@keyframes rec-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,100,100,.5);}55%{box-shadow:0 0 0 8px rgba(255,100,100,0);}}
+.rec-timer{font-family:'Caveat',cursive;font-size:1rem;color:rgba(var(--tx-main),.5);min-width:34px;}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block;animation:rec-blink 1s ease-in-out infinite;}
+@keyframes rec-blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+#rec-preview-row{display:none;align-items:center;gap:10px;margin-top:10px;}
+#rec-preview-row.vis{display:flex;}
+.rec-action{padding:6px 15px;border-radius:20px;font-family:'Caveat',cursive;font-size:.88rem;cursor:pointer;transition:all .2s ease;border:1px solid;}
+#rec-play-btn{background:rgba(var(--tx-main),.07);border-color:rgba(var(--tx-main),.14);color:rgba(var(--tx-main),.75);}
+#rec-play-btn:hover{background:rgba(var(--tx-main),.14);}
+#rec-discard-btn{background:transparent;border-color:rgba(255,100,100,.2);color:rgba(255,130,130,.7);}
+#rec-discard-btn:hover{background:rgba(255,80,80,.08);}
+.rec-dur{font-family:'Caveat',cursive;font-size:.82rem;color:rgba(var(--tx-main),.4);margin-left:auto;}
+
 /* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
@@ -352,7 +376,20 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
       <div class="type-opt" data-t="audio">audio dream</div>
     </div>
     <input    class="m-field" id="note-title-in" type="text" placeholder="give it a name (or don't)">
-    <textarea class="m-field" id="note-body-in"  rows="6"    placeholder="what's on your mind?"></textarea>
+    <textarea class="m-field" id="note-body-in"  rows="4"    placeholder="describe what you recorded (or leave it to breathe)"></textarea>
+    <!-- Audio recorder — shown when type = audio dream -->
+    <div id="audio-rec-panel">
+      <div class="rec-viz"><canvas id="rec-canvas"></canvas></div>
+      <div class="rec-row">
+        <button id="rec-btn" class="idle">🎙 record</button>
+        <span class="rec-timer" id="rec-timer">0:00</span>
+      </div>
+      <div id="rec-preview-row">
+        <button class="rec-action" id="rec-play-btn">▶ preview</button>
+        <button class="rec-action" id="rec-discard-btn">↺ redo</button>
+        <span class="rec-dur" id="rec-dur"></span>
+      </div>
+    </div>
     <div class="mood-lbl">click a mood tag to attach it:</div>
     <div class="mood-chips"    id="mood-chips"></div>
     <div class="mood-added-area" id="mood-added">
@@ -509,6 +546,7 @@ function mapDbPosts(pData, rData, cData){
     author:p.author.pen_name, av:p.author.avatar,
     cat:p.category, type:p.type,
     title:p.title||'', body:p.body, moods:p.moods||[],
+    audioUrl:p.audio_url||null,
     rxn:{'🌌':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌌').length,'✨':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='✨').length,'🌠':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌠').length,'🌙':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌙').length},
     myRxn:myUid?(rData||[]).filter(r=>r.post_id===p.id&&r.user_id===myUid).map(r=>r.emoji):[],
     comments:(cData||[]).filter(c=>c.post_id===p.id).map(c=>({id:c.id,av:c.author.avatar,author:c.author.pen_name,text:c.body})),
@@ -662,15 +700,99 @@ async function loadMorePosts(){
   if(btn){btn.disabled=false;btn.textContent='float deeper ✦';}
 }
 
+// ── Audio recording ───────────────────────────────────────────────
+let mediaRecorder=null,recChunks=[],recStream=null,recAudioCtx=null,recAnalyser=null;
+let recTimerInterval=null,recStartTime=0,recBlob=null,recPreviewUrl=null,recAnimFrame=null;
+let recPreviewAudio=null;
+
+async function startRecording(){
+  try{recStream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  catch(e){toast('microphone access denied ✦');return;}
+  recAudioCtx=new AudioContext();recAnalyser=recAudioCtx.createAnalyser();recAnalyser.fftSize=256;
+  const src=recAudioCtx.createMediaStreamSource(recStream);src.connect(recAnalyser);
+  recChunks=[];mediaRecorder=new MediaRecorder(recStream);
+  mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data);};
+  mediaRecorder.onstop=()=>{
+    recBlob=new Blob(recChunks,{type:'audio/webm'});
+    if(recPreviewUrl)URL.revokeObjectURL(recPreviewUrl);
+    recPreviewUrl=URL.createObjectURL(recBlob);
+    const dur=Math.round((Date.now()-recStartTime)/1000);
+    document.getElementById('rec-dur').textContent=`${Math.floor(dur/60)}:${String(dur%60).padStart(2,'0')}`;
+    document.getElementById('rec-preview-row').classList.add('vis');
+  };
+  mediaRecorder.start();recStartTime=Date.now();
+  const timerEl=document.getElementById('rec-timer');
+  recTimerInterval=setInterval(()=>{const s=Math.round((Date.now()-recStartTime)/1000);timerEl.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;},1000);
+  drawRecWaveform();
+  const btn=document.getElementById('rec-btn');btn.className='recording';btn.innerHTML='<span class="rec-dot"></span> stop';
+}
+
+function stopRecording(discard=false){
+  if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();
+  if(recStream){recStream.getTracks().forEach(t=>t.stop());recStream=null;}
+  if(recAudioCtx){recAudioCtx.close();recAudioCtx=null;recAnalyser=null;}
+  clearInterval(recTimerInterval);cancelAnimationFrame(recAnimFrame);
+  if(recPreviewAudio){recPreviewAudio.pause();recPreviewAudio=null;}
+  const btn=document.getElementById('rec-btn');
+  if(discard){
+    recBlob=null;if(recPreviewUrl){URL.revokeObjectURL(recPreviewUrl);recPreviewUrl=null;}
+    btn.className='idle';btn.innerHTML='🎙 record';
+    document.getElementById('rec-timer').textContent='0:00';
+    document.getElementById('rec-preview-row').classList.remove('vis');
+    document.getElementById('rec-play-btn').textContent='▶ preview';
+    const cv=document.getElementById('rec-canvas');const cx=cv.getContext('2d');cx.clearRect(0,0,cv.width,cv.height);
+  }else{btn.className='has-rec';btn.innerHTML='✓ recorded';}
+}
+
+function drawRecWaveform(){
+  const canvas=document.getElementById('rec-canvas');if(!canvas)return;
+  const W=canvas.offsetWidth,H=canvas.offsetHeight;
+  canvas.width=W*devicePixelRatio;canvas.height=H*devicePixelRatio;
+  const ctx=canvas.getContext('2d');ctx.scale(devicePixelRatio,devicePixelRatio);
+  const bufLen=recAnalyser?recAnalyser.frequencyBinCount:0;
+  const data=new Uint8Array(bufLen);const bars=48;const p=PAL[tod];
+  function frame(){
+    if(!recAnalyser)return;
+    recAnimFrame=requestAnimationFrame(frame);
+    recAnalyser.getByteFrequencyData(data);
+    ctx.clearRect(0,0,W,H);
+    const bw=(W-(bars-1)*2)/bars;
+    for(let i=0;i<bars;i++){
+      const di=Math.floor((i/bars)*bufLen);
+      const val=data[di]/255;const h=Math.max(3,val*H*.85);
+      const x=i*(bw+2),y=(H-h)/2;
+      ctx.fillStyle=`rgba(${p.a1},${.3+val*.7})`;
+      ctx.beginPath();ctx.rect(x,y,Math.max(1,bw),h);ctx.fill();
+    }
+  }
+  frame();
+}
+
+async function uploadAudio(blob,userId){
+  if(!sb)return null;
+  const ext=blob.type.includes('webm')?'webm':'ogg';
+  const path=`${userId}/${Date.now()}.${ext}`;
+  const{error}=await sb.storage.from('audio').upload(path,blob,{contentType:blob.type,upsert:false});
+  if(error){console.error('audio upload:',error);return null;}
+  const{data:urlData}=sb.storage.from('audio').getPublicUrl(path);
+  return urlData?.publicUrl||null;
+}
+
 async function publishPost(draft){
   if(!DEMO_MODE&&!currentUser){closeModal();openAuthModal('in');toast('sign in to share your thoughts ✦');return;}
+  let audioUrl=null;
+  if(draft.type==='audio'&&recBlob&&!DEMO_MODE&&sb){
+    const btn=document.getElementById('pub-btn');btn.textContent='uploading audio…';
+    audioUrl=await uploadAudio(recBlob,currentUser.id);
+    if(!audioUrl)toast('audio upload failed — saving note without audio ✦');
+  }
   let np;
   if(!DEMO_MODE&&sb){
-    const{data,error}=await sb.from('posts').insert({author_id:currentUser.id,title:draft.title||null,body:draft.body,type:draft.type,category:draft.category,moods:draft.moods,audio_url:null}).select('*,author:profiles!author_id(pen_name,avatar)').single();
+    const{data,error}=await sb.from('posts').insert({author_id:currentUser.id,title:draft.title||null,body:draft.body,type:draft.type,category:draft.category,moods:draft.moods,audio_url:audioUrl}).select('*,author:profiles!author_id(pen_name,avatar)').single();
     if(error){toast('something went wrong saving your note ✦');return;}
-    np={id:data.id,authorId:data.author_id,author:data.author.pen_name,av:data.author.avatar,cat:data.category,type:data.type,title:data.title||'',body:data.body,moods:data.moods||[],rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0},myRxn:[],comments:[],ts:'just now',sz:data.body.length>220?'l':data.body.length>80?'m':'s'};
+    np={id:data.id,authorId:data.author_id,author:data.author.pen_name,av:data.author.avatar,cat:data.category,type:data.type,title:data.title||'',body:data.body,moods:data.moods||[],audioUrl:data.audio_url,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0},myRxn:[],comments:[],ts:'just now',sz:data.body.length>220?'l':data.body.length>80?'m':'s'};
   }else{
-    np={id:Date.now(),authorId:currentUser?.id||null,author:currentProfile?.pen_name||'you',av:currentProfile?.avatar||selAv,cat:draft.category,type:draft.type,title:draft.title,body:draft.body,moods:draft.moods,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0},myRxn:[],comments:[],ts:'just now',sz:draft.body.length>220?'l':draft.body.length>80?'m':'s'};
+    np={id:Date.now(),authorId:currentUser?.id||null,author:currentProfile?.pen_name||'you',av:currentProfile?.avatar||selAv,cat:draft.category,type:draft.type,title:draft.title,body:draft.body,moods:draft.moods,audioUrl:recPreviewUrl||null,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0},myRxn:[],comments:[],ts:'just now',sz:draft.body.length>220?'l':draft.body.length>80?'m':'s'};
   }
   posts.unshift(np);
   currentFilter='all';document.querySelectorAll('.cmp-item').forEach(x=>x.classList.remove('active'));document.querySelector('.cmp-item[data-f="all"]')?.classList.add('active');
@@ -803,7 +925,7 @@ function mkNote(post,idx){
     </div>
     ${post.title?`<div class="note-title">${post.title}</div>`:''}
     <div class="note-body${post.type==='poem'?' poem':''}">${post.body}</div>
-    ${post.type==='audio'?`<div class="audio-wrap" data-id="${post.id}"><div class="vinyl">💿</div><div class="waveform">${mkWaveform()}</div><span class="audio-label">play</span></div>`:''}
+    ${post.type==='audio'?`<div class="audio-wrap" data-id="${post.id}" data-url="${post.audioUrl||''}"><div class="vinyl">💿</div><div class="waveform">${mkWaveform()}</div><span class="audio-label">${post.audioUrl?'play':'no audio yet'}</span></div>`:''}
     <div class="stickers">${mkStickers(post.moods)}</div>
     <div class="reactions">${mkReactions(post)}</div>
     ${mkWhispers(post)}`;
@@ -858,8 +980,26 @@ function bindInteractions(){
   // Reactions
   document.querySelectorAll('.rxn').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();toggleReaction(parseInt(btn.dataset.id),btn.dataset.e);}));
 
-  // Audio
-  document.querySelectorAll('.audio-wrap').forEach(aw=>aw.addEventListener('click',e=>{e.stopPropagation();aw.classList.toggle('playing');aw.querySelector('.audio-label').textContent=aw.classList.contains('playing')?'pause':'play';}));
+  // Audio — real playback via HTMLAudioElement when url present
+  const audioPlayers={};
+  document.querySelectorAll('.audio-wrap').forEach(aw=>{
+    aw.addEventListener('click',e=>{
+      e.stopPropagation();
+      const url=aw.dataset.url;const pid=parseInt(aw.dataset.id);
+      if(!url){toast('no audio recorded for this note ✦');return;}
+      // Stop all other players first
+      document.querySelectorAll('.audio-wrap.playing').forEach(w=>{
+        if(w!==aw){w.classList.remove('playing');w.querySelector('.audio-label').textContent='play';const a=audioPlayers[parseInt(w.dataset.id)];if(a){a.pause();a.currentTime=0;}}
+      });
+      if(!audioPlayers[pid]){
+        const audio=new Audio(url);audioPlayers[pid]=audio;
+        audio.addEventListener('ended',()=>{aw.classList.remove('playing');aw.querySelector('.audio-label').textContent='play';});
+      }
+      const audio=audioPlayers[pid];
+      if(aw.classList.contains('playing')){audio.pause();aw.classList.remove('playing');aw.querySelector('.audio-label').textContent='play';}
+      else{audio.play().catch(()=>toast('could not play audio ✦'));aw.classList.add('playing');aw.querySelector('.audio-label').textContent='pause';}
+    });
+  });
 
   // Whispers
   document.querySelectorAll('.whisper-send').forEach(btn=>{
@@ -920,7 +1060,7 @@ sgBtn.addEventListener('click',()=>{
 let selAv='🌙',selType='thought',addedMoods=[];
 const avRow=document.getElementById('av-row');
 AVATARS.forEach(av=>{const d=document.createElement('div');d.className='av-opt'+(av===selAv?' sel':'');d.textContent=av;d.addEventListener('click',()=>{avRow.querySelectorAll('.av-opt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');selAv=av;});avRow.appendChild(d);});
-document.querySelectorAll('.type-opt').forEach(opt=>opt.addEventListener('click',()=>{document.querySelectorAll('.type-opt').forEach(x=>x.classList.remove('sel'));opt.classList.add('sel');selType=opt.dataset.t;}));
+document.querySelectorAll('.type-opt').forEach(opt=>opt.addEventListener('click',()=>{document.querySelectorAll('.type-opt').forEach(x=>x.classList.remove('sel'));opt.classList.add('sel');selType=opt.dataset.t;document.getElementById('audio-rec-panel').classList.toggle('vis',selType==='audio');}));
 const moodChipsEl=document.getElementById('mood-chips'),moodAdded=document.getElementById('mood-added'),moodPH=document.getElementById('mood-placeholder');
 MOODS.forEach(m=>{
   const c=document.createElement('div');c.className='mood-chip';c.textContent=m;
@@ -928,15 +1068,39 @@ MOODS.forEach(m=>{
   moodChipsEl.appendChild(c);
 });
 function openModal(){document.getElementById('write-modal').classList.add('open');overlay.classList.add('on');}
-function closeModal(){document.getElementById('write-modal').classList.remove('open');if(!anyModalOpen()&&!document.getElementById('auth-modal').classList.contains('open'))overlay.classList.remove('on');}
+function closeModal(){
+  document.getElementById('write-modal').classList.remove('open');
+  if(!anyModalOpen()&&!document.getElementById('auth-modal').classList.contains('open'))overlay.classList.remove('on');
+  stopRecording(true);
+  document.getElementById('audio-rec-panel').classList.remove('vis');
+  selType='thought';document.querySelectorAll('.type-opt').forEach(x=>x.classList.toggle('sel',x.dataset.t==='thought'));
+}
 document.getElementById('write-btn').addEventListener('click',openModal);
 document.getElementById('cancel-btn').addEventListener('click',closeModal);
+
+// Recorder button
+document.getElementById('rec-btn').addEventListener('click',()=>{
+  if(mediaRecorder&&mediaRecorder.state==='recording'){stopRecording(false);}
+  else if(recBlob){stopRecording(true);}
+  else{startRecording();}
+});
+document.getElementById('rec-play-btn').addEventListener('click',()=>{
+  if(!recPreviewUrl)return;
+  if(!recPreviewAudio)recPreviewAudio=new Audio(recPreviewUrl);
+  if(recPreviewAudio.paused){recPreviewAudio.play();document.getElementById('rec-play-btn').textContent='⏸ pause';}
+  else{recPreviewAudio.pause();document.getElementById('rec-play-btn').textContent='▶ preview';}
+  recPreviewAudio.onended=()=>{document.getElementById('rec-play-btn').textContent='▶ preview';};
+});
+document.getElementById('rec-discard-btn').addEventListener('click',()=>stopRecording(true));
+
 document.getElementById('pub-btn').addEventListener('click',async()=>{
-  const title=document.getElementById('note-title-in').value.trim();const body=document.getElementById('note-body-in').value.trim();
-  if(!body){toast('your note needs some words ✦');return;}
+  const title=document.getElementById('note-title-in').value.trim();
+  const body=document.getElementById('note-body-in').value.trim();
+  if(!body&&selType!=='audio'){toast('your note needs some words ✦');return;}
+  if(selType==='audio'&&!recBlob&&!DEMO_MODE){toast('record something first ✦');return;}
   const catMap={thought:Math.random()>.5?'fresh':'midnight',poem:'midnight',story:'deep',audio:'audio'};
   const btn=document.getElementById('pub-btn');btn.disabled=true;btn.textContent='sending…';
-  await publishPost({title,body,type:selType,category:catMap[selType]||'fresh',moods:[...addedMoods]});
+  await publishPost({title,body:body||(recBlob?'🎙 audio recording':'…'),type:selType,category:catMap[selType]||'fresh',moods:[...addedMoods]});
   btn.disabled=false;btn.textContent='share with the void ✦';
   document.getElementById('note-title-in').value='';document.getElementById('note-body-in').value='';
   addedMoods=[];moodAdded.querySelectorAll('.mood-picked').forEach(t=>t.remove());moodPH.style.display='';

@@ -27,6 +27,15 @@ cp config.example.js config.js
 Open `config.js` and fill in your **Project URL** and **anon/public key** from:
 > Supabase dashboard → Settings → API
 
+### 3a — Create the audio storage bucket (for audio posts)
+In Supabase → **Storage** → New bucket:
+- Name: `audio`
+- Public bucket: **on**
+
+Then in **Storage → Policies**, add a policy on the `audio` bucket:
+- `INSERT`: authenticated users only (`auth.uid() IS NOT NULL`)
+- `SELECT`: public (`true`)
+
 ### 3b — Enable Realtime (for live updates)
 In your Supabase dashboard → **Database → Replication**, enable Realtime for the `posts`, `reactions`, and `comments` tables.
 
@@ -77,6 +86,7 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
 | 1 | ✅ Done | Backend schema, Auth (register / login / logout), real data layer |
 | 2 | ✅ Done | Real post CRUD (edit, delete), pagination |
 | 3 | ✅ Done | Reactions + comments fully persisted, real-time updates via Supabase Realtime |
+| 4 | ✅ Done | Audio recording (MediaRecorder API), real waveform viz, Supabase Storage upload |
 | 4 | ⬜ | Audio recording + upload + real waveform |
 | 5 | ⬜ | User profiles, shareable post URLs, routing |
 | 6 | ⬜ | Full-text search, tag-based filtering |
