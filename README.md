@@ -27,6 +27,14 @@ cp config.example.js config.js
 Open `config.js` and fill in your **Project URL** and **anon/public key** from:
 > Supabase dashboard → Settings → API
 
+### 3b — Enable Realtime (for live updates)
+In your Supabase dashboard → **Database → Replication**, enable Realtime for the `posts`, `reactions`, and `comments` tables.
+
+Or run this in the SQL Editor:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE posts, reactions, comments;
+```
+
 ### 4 — Auth settings (optional for local dev)
 In Supabase → **Authentication → Settings**:
 - Disable **"Enable email confirmations"** while developing locally so sign-up is instant.
@@ -67,8 +75,8 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
 | Phase | Status | What |
 |---|---|---|
 | 1 | ✅ Done | Backend schema, Auth (register / login / logout), real data layer |
-| 2 | 🔜 Next | Real post CRUD (edit, delete), pagination |
-| 3 | ⬜ | Reactions + comments fully persisted, real-time updates |
+| 2 | ✅ Done | Real post CRUD (edit, delete), pagination |
+| 3 | ✅ Done | Reactions + comments fully persisted, real-time updates via Supabase Realtime |
 | 4 | ⬜ | Audio recording + upload + real waveform |
 | 5 | ⬜ | User profiles, shareable post URLs, routing |
 | 6 | ⬜ | Full-text search, tag-based filtering |

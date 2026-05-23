@@ -233,6 +233,11 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #demo-banner{position:fixed;bottom:108px;left:50%;transform:translateX(-50%);font-family:'Caveat',cursive;font-size:.82rem;color:rgba(var(--tx-main),.45);background:var(--note-bg);border:1px solid rgba(var(--tx-main),.07);padding:5px 16px;border-radius:20px;backdrop-filter:blur(16px);z-index:50;pointer-events:none;opacity:0;transition:opacity .6s ease;white-space:nowrap;}
 #demo-banner.vis{opacity:1;}
 
+/* ── Realtime dot ── */
+#rt-dot{width:7px;height:7px;border-radius:50%;background:var(--aur-1);opacity:0;transition:opacity .5s ease;flex-shrink:0;align-self:center;}
+#rt-dot.live{opacity:.65;animation:rt-pulse 3s ease-in-out infinite;}
+@keyframes rt-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,245,160,.45);}55%{box-shadow:0 0 0 5px rgba(0,245,160,0);}}
+
 /* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
@@ -283,7 +288,7 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
       <div class="site-tagline">your inner world matters and deserves space</div>
     </div>
     <div class="hd-right">
-      <span class="time-chip" id="time-chip">✦ night</span>
+      <span class="time-chip" id="time-chip">✦ night</span><span id="rt-dot" title="live — updates in real time"></span>
       <button id="stargaze-btn">✦ <span>Stargaze</span></button>
       <div id="hd-auth"></div>
     </div>
@@ -518,12 +523,12 @@ async function initAuth(){
   try{
     const{data:{session}}=await sb.auth.getSession();
     if(session?.user){currentUser=session.user;currentProfile=await fetchProfile(session.user.id);}
-    updateAuthUI();
+    updateAuthUI();subscribeRealtime();
     sb.auth.onAuthStateChange(async(event,session)=>{
       if(session?.user){currentUser=session.user;currentProfile=await fetchProfile(session.user.id);}
       else{currentUser=null;currentProfile=null;}
       updateAuthUI();
-      if(event==='SIGNED_IN'||event==='SIGNED_OUT') await loadPosts();
+      if(event==='SIGNED_IN'||event==='SIGNED_OUT'){await loadPosts();subscribeRealtime();}
     });
   }catch(e){console.error('initAuth:',e);updateAuthUI();}
 }
@@ -542,6 +547,76 @@ function updateAuthUI(){
   }
 }
 async function doSignOut(){if(!sb)return;await sb.auth.signOut();toast('see you in the space ✦');}
+
+// ── Realtime ──────────────────────────────────────────────────────
+let rtChannel=null;
+function subscribeRealtime(){
+  if(DEMO_MODE||!sb)return;
+  if(rtChannel){sb.removeChannel(rtChannel);rtChannel=null;}
+  const dot=document.getElementById('rt-dot');
+  rtChannel=sb.channel('aurora-live')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'reactions'},p=>handleRxnInsert(p.new))
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'reactions'},p=>handleRxnDelete(p.old))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'comments'},p=>handleCommentInsert(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},p=>handlePostInsert(p.new))
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'posts'},p=>handlePostDelete(p.old))
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'posts'},p=>handlePostUpdate(p.new))
+    .subscribe(status=>{if(dot)dot.classList.toggle('live',status==='SUBSCRIBED');});
+}
+
+function handleRxnInsert(row){
+  if(row.user_id===currentUser?.id)return;
+  const post=posts.find(p=>p.id===row.post_id);if(!post)return;
+  post.rxn[row.emoji]=(post.rxn[row.emoji]||0)+1;
+  const btn=document.querySelector(`.rxn[data-e="${row.emoji}"][data-id="${row.post_id}"]`);
+  if(btn){btn.querySelector('.rxn-n').textContent=post.rxn[row.emoji]||'';btn.style.transform='scale(1.2)';setTimeout(()=>btn.style.transform='',200);}
+}
+
+function handleRxnDelete(row){
+  if(row.user_id===currentUser?.id)return;
+  const post=posts.find(p=>p.id===row.post_id);if(!post)return;
+  post.rxn[row.emoji]=Math.max(0,(post.rxn[row.emoji]||0)-1);
+  const btn=document.querySelector(`.rxn[data-e="${row.emoji}"][data-id="${row.post_id}"]`);
+  if(btn)btn.querySelector('.rxn-n').textContent=post.rxn[row.emoji]||'';
+}
+
+async function handleCommentInsert(row){
+  if(row.author_id===currentUser?.id)return;
+  const post=posts.find(p=>p.id===row.post_id);if(!post)return;
+  const{data:profile}=await sb.from('profiles').select('pen_name,avatar').eq('id',row.author_id).maybeSingle();
+  const nc={id:row.id,av:profile?.avatar||'🌸',author:profile?.pen_name||'someone',text:row.body};
+  post.comments.push(nc);
+  if(expandedEl&&parseInt(expandedEl.dataset.id)===row.post_id){
+    const wl=expandedEl.querySelector('.whispers');
+    if(wl){const nw=document.createElement('div');nw.className='whisper';nw.innerHTML=`<div class="whisper-av">${nc.av}</div><div class="whisper-body"><div class="whisper-author">${nc.author}</div><div class="whisper-text">${nc.text}</div></div>`;wl.insertBefore(nw,wl.querySelector('.add-whisper'));}
+  }
+}
+
+async function handlePostInsert(row){
+  if(row.author_id===currentUser?.id)return;
+  if(posts.find(p=>p.id===row.id))return;
+  const{data}=await sb.from('posts').select('*,author:profiles!author_id(pen_name,avatar)').eq('id',row.id).maybeSingle();
+  if(!data)return;
+  const np=mapDbPosts([data],[],[])[0];
+  posts.unshift(np);render();
+  toast(`✦ ${np.author} just shared something`);
+}
+
+function handlePostDelete(row){
+  if(!posts.find(p=>p.id===row.id))return;
+  posts=posts.filter(p=>p.id!==row.id);delete posCache[row.id];
+  if(expandedEl&&parseInt(expandedEl.dataset.id)===row.id)collapseNote();
+  render();
+}
+
+function handlePostUpdate(row){
+  const post=posts.find(p=>p.id===row.id);if(!post)return;
+  if(row.author_id===currentUser?.id)return;
+  post.title=row.title||'';post.body=row.body;post.moods=row.moods||[];
+  post.sz=row.body.length>220?'l':row.body.length>80?'m':'s';
+  delete posCache[row.id];render();
+}
+
 const overlay=document.getElementById('overlay');
 function openAuthModal(tab='in'){if(DEMO_MODE){toast('configure Supabase in config.js to enable auth ✦');return;}switchAuthTab(tab);document.getElementById('auth-modal').classList.add('open');overlay.classList.add('on');}
 function closeAuthModal(){document.getElementById('auth-modal').classList.remove('open');if(!anyModalOpen())overlay.classList.remove('on');}

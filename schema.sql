@@ -137,6 +137,11 @@ CREATE POLICY "comments_delete" ON comments
   );
 
 -- ================================================================
+-- Realtime — enable live updates for reactions, comments, and posts
+-- ================================================================
+ALTER PUBLICATION supabase_realtime ADD TABLE posts, reactions, comments;
+
+-- ================================================================
 -- Grant owner role to a specific user (run manually after signing up)
 -- Replace the email below with your own.
 -- ================================================================
