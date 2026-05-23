@@ -262,6 +262,35 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #rec-discard-btn:hover{background:rgba(255,80,80,.08);}
 .rec-dur{font-family:'Caveat',cursive;font-size:.82rem;color:rgba(var(--tx-main),.4);margin-left:auto;}
 
+/* ── Author link ── */
+.author-link{color:inherit;text-decoration:none;transition:color .2s ease;}
+.author-link:hover{color:var(--aur-1);}
+
+/* ── Share button on expanded note ── */
+.note-share{position:absolute;top:11px;right:40px;width:26px;height:26px;border-radius:50%;background:rgba(var(--tx-main),.07);border:1px solid rgba(var(--tx-main),.12);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem;color:rgba(var(--tx-main),.7);transition:all .2s ease;z-index:5;}
+.note.expanded .note-share{display:flex;}
+.note-share:hover{background:rgba(var(--tx-main),.15);}
+
+/* ══════════════════════════════════════════
+   PROFILE VIEW
+══════════════════════════════════════════ */
+#profile-view{position:fixed;inset:0;z-index:150;overflow-y:auto;padding:100px 36px 120px;background:rgba(5,8,24,.82);opacity:0;pointer-events:none;transition:opacity .4s ease;}
+#profile-view.vis{opacity:1;pointer-events:all;}
+.pv-back{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;background:var(--note-bg);border:1px solid rgba(var(--tx-main),.12);border-radius:24px;backdrop-filter:blur(22px);font-family:'Caveat',cursive;font-size:.95rem;color:rgba(var(--tx-main),.75);cursor:pointer;transition:all .2s ease;margin-bottom:28px;}
+.pv-back:hover{background:rgba(var(--tx-main),.12);transform:translateX(-4px);}
+.pv-header{background:var(--note-bg);border:1px solid var(--note-bd);border-radius:4px;padding:28px 32px;backdrop-filter:blur(22px);box-shadow:0 8px 36px rgba(0,0,0,.4),0 0 60px var(--glow);max-width:520px;margin:0 auto 44px;display:flex;align-items:flex-start;gap:20px;position:relative;}
+.pv-av{font-size:2.8rem;flex-shrink:0;line-height:1;margin-top:4px;}
+.pv-info{flex:1;min-width:0;}
+.pv-name{font-family:'Caveat',cursive;font-size:1.85rem;font-weight:700;color:rgba(var(--tx-main),1);line-height:1.1;margin-bottom:6px;}
+.pv-bio{font-size:.95rem;font-style:italic;color:rgba(var(--tx-main),.65);line-height:1.6;margin-bottom:8px;}
+.pv-meta{font-family:'Caveat',cursive;font-size:.82rem;color:rgba(var(--tx-main),.38);letter-spacing:.04em;}
+.pv-edit-btn{position:absolute;top:14px;right:14px;padding:6px 15px;border-radius:20px;background:rgba(var(--tx-main),.07);border:1px solid rgba(var(--tx-main),.12);font-family:'Caveat',cursive;font-size:.84rem;color:rgba(var(--tx-main),.65);cursor:pointer;transition:all .2s ease;}
+.pv-edit-btn:hover{background:rgba(var(--tx-main),.14);}
+#pv-board{position:relative;min-height:60vh;}
+
+/* ── Profile edit modal ── */
+#profile-edit-modal{z-index:295;width:min(480px,92vw);}
+
 /* ══════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════ */
@@ -320,6 +349,7 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 
   <div id="filter-badge"></div>
   <div id="board"></div>
+  <div id="profile-view"></div>
 
   <!-- Compass -->
   <div id="compass">
@@ -426,6 +456,18 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
     <div class="m-actions" style="justify-content:center;gap:12px;margin-top:0;">
       <button class="btn-c"      id="confirm-cancel-btn">cancel</button>
       <button class="btn-danger" id="confirm-ok-btn">delete ✦</button>
+    </div>
+  </div>
+
+  <!-- Profile edit modal -->
+  <div id="profile-edit-modal" class="modal-base" role="dialog" aria-label="Edit profile">
+    <div class="modal-title">edit your profile</div>
+    <div class="av-row" id="pe-av-row"></div>
+    <input  class="m-field" id="pe-name-in" type="text"  placeholder="pen name (2–30 chars)" maxlength="30">
+    <textarea class="m-field" id="pe-bio-in" rows="3" placeholder="a few words about yourself (optional)" maxlength="300"></textarea>
+    <div class="m-actions">
+      <button class="btn-c"   id="pe-cancel-btn">cancel</button>
+      <button class="btn-pub" id="pe-save-btn">save ✦</button>
     </div>
   </div>
 
@@ -574,9 +616,10 @@ async function fetchProfile(uid){if(!sb)return null;const{data}=await sb.from('p
 function updateAuthUI(){
   const el=document.getElementById('hd-auth');if(!el)return;
   if(currentProfile){
-    el.innerHTML=`<div class="user-chip" id="user-chip"><span class="user-chip-av">${currentProfile.avatar}</span><span>${currentProfile.pen_name}</span><span class="user-chip-arr">▾</span><div class="user-dropdown" id="user-dd"><div class="ud-item danger" id="signout-ud">sign out</div></div></div>`;
+    el.innerHTML=`<div class="user-chip" id="user-chip"><span class="user-chip-av">${currentProfile.avatar}</span><span>${currentProfile.pen_name}</span><span class="user-chip-arr">▾</span><div class="user-dropdown" id="user-dd"><div class="ud-item" id="myprofile-ud">my profile</div><div class="ud-item danger" id="signout-ud">sign out</div></div></div>`;
     const chip=document.getElementById('user-chip'),dd=document.getElementById('user-dd');
     chip.addEventListener('click',e=>{e.stopPropagation();dd.classList.toggle('open');});
+    document.getElementById('myprofile-ud').addEventListener('click',e=>{e.stopPropagation();dd.classList.remove('open');showProfile(currentProfile.pen_name);});
     document.getElementById('signout-ud').addEventListener('click',e=>{e.stopPropagation();doSignOut();});
     setTimeout(()=>document.addEventListener('click',()=>dd?.classList.remove('open'),{once:true}),0);
   }else{
@@ -659,7 +702,7 @@ const overlay=document.getElementById('overlay');
 function openAuthModal(tab='in'){if(DEMO_MODE){toast('configure Supabase in config.js to enable auth ✦');return;}switchAuthTab(tab);document.getElementById('auth-modal').classList.add('open');overlay.classList.add('on');}
 function closeAuthModal(){document.getElementById('auth-modal').classList.remove('open');if(!anyModalOpen())overlay.classList.remove('on');}
 function switchAuthTab(tab){document.querySelectorAll('.auth-tab').forEach(t=>t.classList.toggle('active',t.dataset.t===tab));document.getElementById('auth-panel-in').style.display=tab==='in'?'':'none';document.getElementById('auth-panel-up').style.display=tab==='up'?'':'none';}
-function anyModalOpen(){return['write-modal','edit-modal','confirm-dialog'].some(id=>document.getElementById(id).classList.contains('open'));}
+function anyModalOpen(){return['write-modal','edit-modal','confirm-dialog','profile-edit-modal'].some(id=>document.getElementById(id).classList.contains('open'));}
 
 // ── Data ─────────────────────────────────────────────────────────
 async function loadPosts(){
@@ -918,9 +961,10 @@ function mkNote(post,idx){
   el.innerHTML=`
     <div class="pin"></div>
     <div class="note-close">✕</div>
+    <div class="note-share" data-id="${post.id}" title="copy link">⎘</div>
     <div class="note-head">
       <div class="note-av">${post.av}</div>
-      <div class="note-meta"><div class="note-author">${post.author}</div><div class="note-ts">${post.ts}</div></div>
+      <div class="note-meta"><div class="note-author"><a href="#profile/${encodeURIComponent(post.author)}" class="author-link" data-author="${post.author}">${post.author}</a></div><div class="note-ts">${post.ts}</div></div>
       <span class="note-cat-tag">${CATS[post.cat]||''}</span>
     </div>
     ${post.title?`<div class="note-title">${post.title}</div>`:''}
@@ -971,11 +1015,23 @@ function collapseNote(){
 function bindInteractions(){
   document.querySelectorAll('.note').forEach(el=>{
     el.addEventListener('click',e=>{
-      if(e.target.closest('.rxn,.audio-wrap,.note-close,.whisper-send,.whisper-input,.note-actions'))return;
+      if(e.target.closest('.rxn,.audio-wrap,.note-close,.note-share,.author-link,.whisper-send,.whisper-input,.note-actions'))return;
       if(el.classList.contains('expanded'))return;expandNote(el);
     });
   });
   document.querySelectorAll('.note-close').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();collapseNote();}));
+
+  // Share button
+  document.querySelectorAll('.note-share').forEach(btn=>btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const url=`${location.origin}${location.pathname}#post/${btn.dataset.id}`;
+    navigator.clipboard?.writeText(url).then(()=>toast('link copied ✦')).catch(()=>toast(url));
+  }));
+
+  // Author links
+  document.querySelectorAll('.author-link').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();showProfile(a.dataset.author);
+  }));
 
   // Reactions
   document.querySelectorAll('.rxn').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();toggleReaction(parseInt(btn.dataset.id),btn.dataset.e);}));
@@ -1026,10 +1082,113 @@ function bindInteractions(){
   });
 }
 
+// ── Profile ───────────────────────────────────────────────────────
+let peSelAv='🌙';
+
+async function showProfile(penName){
+  const enc=encodeURIComponent(penName);
+  if(location.hash!==`#profile/${enc}`)history.pushState(null,'',`#profile/${enc}`);
+  const pv=document.getElementById('profile-view');
+  pv.innerHTML=`<div style="text-align:center;padding:60px 0;font-family:'Caveat',cursive;color:rgba(var(--tx-main),.4);font-size:1.1rem;">finding the writer…</div>`;
+  pv.classList.add('vis');
+  if(DEMO_MODE||!sb){
+    const ap=DEMO_POSTS.filter(p=>p.author===penName);
+    renderProfileView({pen_name:penName,avatar:ap[0]?.av||'🌙',bio:null,created_at:null},ap);return;
+  }
+  const{data:prof}=await sb.from('profiles').select('*').eq('pen_name',penName).maybeSingle();
+  if(!prof){toast('writer not found ✦');hideProfile();return;}
+  const{data:pData}=await sb.from('posts').select('*,author:profiles!author_id(pen_name,avatar)').eq('author_id',prof.id).order('created_at',{ascending:false});
+  const ids=(pData||[]).map(p=>p.id);let rData=[],cData=[];
+  if(ids.length)[{data:rData},{data:cData}]=await Promise.all([
+    sb.from('reactions').select('post_id,emoji,user_id').in('post_id',ids),
+    sb.from('comments').select('*,author:profiles!author_id(pen_name,avatar)').in('post_id',ids).order('created_at',{ascending:true})
+  ]);
+  renderProfileView(prof,mapDbPosts(pData||[],rData||[],cData||[]));
+}
+
+function renderProfileView(profile,profilePosts){
+  const pv=document.getElementById('profile-view');
+  const isMe=currentProfile&&currentProfile.pen_name===profile.pen_name;
+  const joined=profile.created_at?new Date(profile.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'}):'';
+  pv.innerHTML=`
+    <button class="pv-back" id="pv-back">← back to the space</button>
+    <div class="pv-header">
+      <div class="pv-av">${profile.avatar}</div>
+      <div class="pv-info">
+        <div class="pv-name">${profile.pen_name}</div>
+        ${profile.bio?`<div class="pv-bio">"${profile.bio}"</div>`:''}
+        <div class="pv-meta">${profilePosts.length} note${profilePosts.length!==1?'s':''} ${joined?'· joined '+joined:''}</div>
+      </div>
+      ${isMe?`<button class="pv-edit-btn" id="pv-edit-btn">edit profile</button>`:''}
+    </div>
+    <div class="pv-board" id="pv-board"></div>`;
+  document.getElementById('pv-back').addEventListener('click',()=>{history.pushState(null,'',location.pathname);hideProfile();});
+  if(isMe)document.getElementById('pv-edit-btn').addEventListener('click',openProfileEdit);
+  const pvBoard=document.getElementById('pv-board');
+  if(!profilePosts.length){pvBoard.innerHTML='<div class="empty-state"><div>✦</div><div>no notes yet…</div></div>';return;}
+  let maxY=0;
+  profilePosts.forEach((post,i)=>{
+    const el=mkNote(post,i);pvBoard.appendChild(el);
+    if(window.innerWidth>768){const pos=stablePos(post.id,i);maxY=Math.max(maxY,pos.y+{s:200,m:320,l:430}[post.sz||'m']);}
+  });
+  if(window.innerWidth>768)pvBoard.style.minHeight=`${maxY+100}px`;
+  bindInteractions();
+}
+
+function hideProfile(){
+  document.getElementById('profile-view').classList.remove('vis');
+  if(expandedEl)collapseNote();
+}
+
+function openProfileEdit(){
+  if(!currentProfile)return;
+  peSelAv=currentProfile.avatar;
+  document.getElementById('pe-name-in').value=currentProfile.pen_name;
+  document.getElementById('pe-bio-in').value=currentProfile.bio||'';
+  document.querySelectorAll('#pe-av-row .av-opt').forEach(d=>d.classList.toggle('sel',d.textContent===peSelAv));
+  document.getElementById('profile-edit-modal').classList.add('open');overlay.classList.add('on');
+}
+function closeProfileEdit(){
+  document.getElementById('profile-edit-modal').classList.remove('open');
+  if(!anyModalOpen()&&!document.getElementById('auth-modal').classList.contains('open'))overlay.classList.remove('on');
+}
+async function saveProfile(){
+  const name=document.getElementById('pe-name-in').value.trim();
+  const bio=document.getElementById('pe-bio-in').value.trim();
+  if(!name||name.length<2){toast('pen name needs at least 2 characters ✦');return;}
+  const btn=document.getElementById('pe-save-btn');btn.disabled=true;btn.textContent='saving…';
+  if(!DEMO_MODE&&sb){
+    if(name!==currentProfile.pen_name){
+      const{data:taken}=await sb.from('profiles').select('id').eq('pen_name',name).maybeSingle();
+      if(taken){toast('that pen name is already taken ✦');btn.disabled=false;btn.textContent='save ✦';return;}
+    }
+    const{error}=await sb.from('profiles').update({pen_name:name,avatar:peSelAv,bio:bio||null}).eq('id',currentProfile.id);
+    if(error){toast('could not save profile ✦');btn.disabled=false;btn.textContent='save ✦';return;}
+  }
+  currentProfile.pen_name=name;currentProfile.avatar=peSelAv;currentProfile.bio=bio||null;
+  btn.disabled=false;btn.textContent='save ✦';
+  closeProfileEdit();updateAuthUI();toast('profile updated ✦');
+  renderProfileView({...currentProfile},posts.filter(p=>p.authorId===currentProfile.id));
+}
+
+// ── Router ────────────────────────────────────────────────────────
+function router(){
+  const hash=location.hash.slice(1);
+  if(!hash||hash==='home'){hideProfile();return;}
+  if(hash.startsWith('profile/')){showProfile(decodeURIComponent(hash.slice(8)));return;}
+  if(hash.startsWith('post/')){
+    hideProfile();
+    const id=parseInt(hash.slice(5));
+    setTimeout(()=>{const el=document.querySelector(`.note[data-id="${id}"]`);if(el&&!el.classList.contains('expanded'))expandNote(el);},600);
+  }
+}
+window.addEventListener('hashchange',router);
+
 // Overlay
 overlay.addEventListener('click',()=>{
   if(document.getElementById('confirm-dialog').classList.contains('open')){closeConfirm();return;}
   if(document.getElementById('auth-modal').classList.contains('open')){closeAuthModal();return;}
+  if(document.getElementById('profile-edit-modal').classList.contains('open')){closeProfileEdit();return;}
   if(document.getElementById('edit-modal').classList.contains('open')){closeEditModal();return;}
   if(document.getElementById('write-modal').classList.contains('open')){closeModal();return;}
   collapseNote();
@@ -1146,6 +1305,12 @@ document.getElementById('su-btn').addEventListener('click',async()=>{
   btn.disabled=false;btn.textContent='join the space ✦';closeAuthModal();toast(`welcome, ${name} ✦`);
 });
 
+// ── Profile edit modal handlers ───────────────────────────────────
+const peAvRow=document.getElementById('pe-av-row');
+AVATARS.forEach(av=>{const d=document.createElement('div');d.className='av-opt'+(av===peSelAv?' sel':'');d.textContent=av;d.addEventListener('click',()=>{peAvRow.querySelectorAll('.av-opt').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');peSelAv=av;});peAvRow.appendChild(d);});
+document.getElementById('pe-cancel-btn').addEventListener('click',closeProfileEdit);
+document.getElementById('pe-save-btn').addEventListener('click',saveProfile);
+
 // ── Toast ─────────────────────────────────────────────────────────
 const toastEl=document.getElementById('toast');let toastTimer=null;
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),3100);}
@@ -1153,7 +1318,7 @@ function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTim
 // ── Init ──────────────────────────────────────────────────────────
 document.fonts.ready.then(async()=>{
   await initAuth();await loadPosts();
-  setTimeout(()=>{const ld=document.getElementById('loading');ld.classList.add('gone');setTimeout(()=>ld.remove(),1300);},2000);
+  setTimeout(()=>{const ld=document.getElementById('loading');ld.classList.add('gone');setTimeout(()=>ld.remove(),1300);router();},2000);
 });
 </script>
 </body>

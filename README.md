@@ -87,6 +87,7 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
 | 2 | ✅ Done | Real post CRUD (edit, delete), pagination |
 | 3 | ✅ Done | Reactions + comments fully persisted, real-time updates via Supabase Realtime |
 | 4 | ✅ Done | Audio recording (MediaRecorder API), real waveform viz, Supabase Storage upload |
+| 5 | ✅ Done | User profiles, shareable post URLs (#post/id), client-side hash routing |
 | 4 | ⬜ | Audio recording + upload + real waveform |
 | 5 | ⬜ | User profiles, shareable post URLs, routing |
 | 6 | ⬜ | Full-text search, tag-based filtering |
