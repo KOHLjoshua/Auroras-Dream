@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Caveat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;1,400&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Philosopher:ital@0;1&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 /* ══════════════════════════════════════════════════════════════
@@ -58,7 +58,7 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 /* ══════════════════════════════════════════
    NOTES BOARD
 ══════════════════════════════════════════ */
-#board{position:relative;padding:110px 36px 120px;min-height:100vh;}
+#board{position:relative;padding:16px 36px 120px;min-height:100vh;}
 .note{position:absolute;background:var(--note-bg);border:1px solid var(--note-bd);border-radius:3px;padding:22px 22px 18px;backdrop-filter:blur(18px) saturate(120%);-webkit-backdrop-filter:blur(18px) saturate(120%);box-shadow:0 6px 28px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.03),inset 0 1px 0 rgba(255,255,255,.06);cursor:pointer;animation:breathe 7s ease-in-out infinite;animation-delay:var(--breathe-delay,0s);will-change:transform;transition:box-shadow .4s ease,filter .4s ease,opacity .4s ease;user-select:none;z-index:10;}
 .note::before{content:'';position:absolute;inset:0;border-radius:3px;background-image:repeating-linear-gradient(0deg,transparent,transparent 22px,rgba(255,255,255,.012) 22px,rgba(255,255,255,.012) 23px);pointer-events:none;}
 .note::after{content:'';position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:48px;height:16px;background:rgba(var(--tx-main),.08);border-radius:2px;border:1px solid rgba(var(--tx-main),.12);}
@@ -397,7 +397,7 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 .ld-bar{width:190px;height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;}
 .ld-fill{height:100%;border-radius:1px;background:linear-gradient(90deg,#00f5a0,#7b2ff7);animation:ld-fill 2.4s ease forwards;}
 @keyframes ld-fill{from{width:0%}to{width:100%}}
-@keyframes ld-glow{0%,100%{text-shadow:0 0 18px rgba(0,245,160,.3);}50%{text-shadow:0 0 42px rgba(0,245,160,.7),0 0 80px rgba(123,47,247,.35);}}
+@keyframes ld-glow{0%{text-shadow:0 0 18px rgba(0,245,160,.3);}33%{text-shadow:0 0 44px rgba(0,245,160,.75),0 0 90px rgba(123,47,247,.4);}66%{text-shadow:0 0 38px rgba(255,0,110,.45),0 0 70px rgba(0,245,160,.35);}100%{text-shadow:0 0 18px rgba(0,245,160,.3);}}
 .empty-state{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
 .empty-state div:first-child{font-size:2.5rem;opacity:.35;}
 .empty-state div:last-child{font-family:'Caveat',cursive;font-size:1.15rem;color:rgba(var(--tx-main),.35);margin-top:8px;}
@@ -408,7 +408,7 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 ══════════════════════════════════════════ */
 @media(max-width:768px){
   .note{position:relative !important;transform:none !important;width:100% !important;animation:none !important;margin-bottom:18px;}
-  #board{padding:100px 14px 100px;}
+  #board{padding:8px 14px 100px;}
   .site-header{padding:10px 12px;}
   .hd-right{gap:5px;}
   #compass{bottom:18px;left:18px;} #write-btn{bottom:18px;right:18px;} #toast{right:18px;bottom:90px;}
@@ -421,11 +421,30 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
   #search-bar.open{z-index:125;}
   #load-more-btn{position:relative !important;top:auto !important;left:auto !important;transform:none !important;display:block;margin:20px auto;width:fit-content;}
 }
+
+/* ══════════════════════════════════════════
+   HERO
+══════════════════════════════════════════ */
+#hero{position:relative;z-index:15;text-align:center;padding:82px 36px 36px;pointer-events:none;}
+#hero-title{font-family:'Caveat',cursive;font-size:clamp(2rem,4.5vw,3.4rem);font-weight:700;color:rgba(var(--tx-main),1);text-shadow:0 0 40px var(--glow),0 0 80px rgba(0,245,160,.12);letter-spacing:.04em;line-height:1.1;margin-bottom:20px;opacity:0;transition:none;}
+#hero-title.bloom{animation:title-bloom 2.2s cubic-bezier(.22,1,.36,1) forwards;}
+@keyframes title-bloom{from{opacity:0;filter:blur(14px);letter-spacing:.24em;}to{opacity:1;filter:blur(0);letter-spacing:.04em;}}
+
+/* ── Whisper quote ── */
+#quote-area{position:relative;max-width:520px;margin:0 auto;min-height:72px;display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:all;cursor:default;}
+#quote-glyph{font-size:.82rem;color:rgba(var(--tx-main),.22);transition:color .7s ease,transform .7s ease;user-select:none;}
+#quote-area:hover #quote-glyph{color:var(--aur-1);transform:scale(1.35) rotate(36deg);}
+#quote-text{font-size:1.06rem;line-height:1.82;color:rgba(var(--tx-main),.6);font-style:italic;letter-spacing:.014em;text-align:center;max-width:460px;transition:text-shadow .3s ease;}
+#quote-area:hover #quote-text{animation:aurora-brush 2.4s ease-in-out;}
+@keyframes quote-appear{from{opacity:0;transform:translateY(10px);filter:blur(4px);}to{opacity:1;transform:translateY(0);filter:blur(0);}}
+@keyframes aurora-brush{0%,100%{text-shadow:none;}35%{text-shadow:0 0 18px rgba(0,245,160,.5),0 0 38px rgba(123,47,247,.22);}65%{text-shadow:0 0 26px rgba(0,245,160,.42),0 0 52px rgba(255,0,110,.18);}}
+
+@media(max-width:768px){#hero{padding:68px 20px 24px;}#hero-title{font-size:2rem;margin-bottom:14px;}#quote-text{font-size:.96rem;}}
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="ld-title">Aurora Notes</div><div class="ld-sub">finding the light…</div><div class="ld-bar"><div class="ld-fill"></div></div></div>
+<div id="loading"><div class="ld-title">Hey Aurora 🤗</div><div class="ld-sub">finding the light…</div><div class="ld-bar"><div class="ld-fill"></div></div></div>
 
 <canvas id="bg-canvas"></canvas>
 <canvas id="ptx-canvas"></canvas>
@@ -454,6 +473,15 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
     </div>
     <div class="srch-tag-row" id="srch-tag-row"></div>
     <div class="srch-count" id="srch-count"></div>
+  </div>
+
+  <!-- Hero title + whisper quotes -->
+  <div id="hero">
+    <div id="hero-title">Aurora to the World</div>
+    <div id="quote-area" role="region" aria-label="Daily whisper">
+      <div id="quote-glyph">✦</div>
+      <div id="quote-text"></div>
+    </div>
   </div>
 
   <!-- Notification panel -->
@@ -1708,6 +1736,94 @@ document.getElementById('pe-save-btn').addEventListener('click',saveProfile);
 const toastEl=document.getElementById('toast');let toastTimer=null;
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('on'),3100);}
 
+// ── Whisper Quote System ──────────────────────────────────────────
+const QUOTES=[
+  // refuge & light (Bible, unnamed)
+  "Be still, and know.",
+  "The light shines in the darkness, and the darkness has not overcome it.",
+  "He leads me beside quiet waters. He restores my soul.",
+  "Even the darkness is as light to you.",
+  "He heals the brokenhearted and binds up their wounds.",
+  "Cast all your anxiety on him — he cares for you.",
+  "Your word is a lamp to my feet and a light to my path.",
+  "Do not fear, for I am with you. Do not be dismayed.",
+  "Trust with all your heart. Lean not on your own understanding.",
+  "Come to me, all who are weary and burdened, and I will give you rest.",
+  "He who dwells in the shelter of the Most High shall abide under the shadow of the Almighty.",
+  "Ask, and it will be given to you. Seek, and you will find.",
+  // quiet rebellion & beauty (Stoic, unnamed)
+  "What stands in the way becomes the way.",
+  "You have power over your mind — not outside events. Realize this, and you will find strength.",
+  "Waste no more time arguing what a good person should be. Be one.",
+  "We suffer more in imagination than in reality.",
+  "Begin at once to live, and count each separate day as a separate life.",
+  "It is not the one who has too little, but the one who craves more, that is poor.",
+  "Dwell on the beauty of life. Watch the stars, and see yourself running with them.",
+  "Nowhere can one find a quieter retreat than in their own soul.",
+  "True happiness is to enjoy the present, without anxious dependence upon the future.",
+  "He suffers more than necessary who suffers before it is necessary.",
+  "The person who has internalized what they truly need will not want for much.",
+  // small wonders & cosmic loneliness (micro-poems)
+  "somewhere, someone is making soup and thinking of you",
+  "the moon has been watching this town longer than the town has had a name",
+  "your future self is already proud of you — they just can't reach back to say it yet",
+  "every star is someone else's night light from a galaxy you haven't been named in",
+  "rain is just the sky deciding it has held on long enough",
+  "you were born in a window of history where you can hear music written by the long dead for almost nothing. sit with that.",
+  "what if some birds are just extremely committed to checking in on specific people",
+  "the universe is 13.8 billion years old and still hasn't figured out what to do with a Tuesday afternoon",
+  "a library is just a place where time agreed to stand still for a while",
+  "perhaps you are not lost — perhaps this is exactly where the wandering was always headed",
+  "the thing about stars is they don't know they're beautiful. they're just trying to stay warm.",
+  "you are allowed to be a work in progress and a masterpiece simultaneously",
+  "some of the most important conversations you will ever have were with strangers on trains going somewhere else",
+  "be patient with yourself. you are a difficult sentence in a language that is still being written",
+];
+const QUOTE_FONTS=[
+  "'Playfair Display',Georgia,serif",
+  "'IM Fell English','Times New Roman',serif",
+  "'Special Elite','Courier New',monospace",
+  "'Cormorant Garamond',Georgia,serif",
+  "'Philosopher',Georgia,serif",
+  "'Lora',Georgia,serif",
+  "'Crimson Pro',Georgia,serif",
+  "'Caveat',cursive",
+];
+const CYCLE_MS=2.5*60*1000;
+const quoteEpoch=Date.now();
+const quoteOffset=Math.floor(Math.random()*QUOTES.length);
+let curQuoteIdx=-1;
+
+function getQIdxAt(t){return(quoteOffset+Math.floor((t-quoteEpoch)/CYCLE_MS))%QUOTES.length;}
+function getQFontAt(t){return Math.floor((t-quoteEpoch)/CYCLE_MS)%QUOTE_FONTS.length;}
+
+function displayQuote(qIdx,fIdx,animate){
+  const el=document.getElementById('quote-text');if(!el)return;
+  curQuoteIdx=qIdx;
+  const setContent=()=>{
+    el.style.fontFamily=QUOTE_FONTS[fIdx];
+    el.textContent=QUOTES[qIdx];
+    el.style.animation='none';
+    el.offsetHeight; // force reflow
+    el.style.animation='quote-appear 1.5s cubic-bezier(.22,1,.36,1) forwards';
+  };
+  if(!animate){setContent();return;}
+  el.style.transition='opacity .9s ease,filter .9s ease';
+  el.style.opacity='0';el.style.filter='blur(4px)';
+  setTimeout(()=>{el.style.transition='';el.style.opacity='';el.style.filter='';setContent();},920);
+}
+
+function initQuotes(){
+  const t=Date.now();
+  displayQuote(getQIdxAt(t),getQFontAt(t),false);
+  // Poll every 20s so rotation fires within ~20s of the intended time
+  setInterval(()=>{const t2=Date.now();const qi=getQIdxAt(t2);if(qi!==curQuoteIdx)displayQuote(qi,getQFontAt(t2),true);},20000);
+  // Instant sync when user returns to tab after a long absence
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden){const t2=Date.now();const qi=getQIdxAt(t2);if(qi!==curQuoteIdx)displayQuote(qi,getQFontAt(t2),false);}
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────────
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
@@ -1716,8 +1832,11 @@ document.fonts.ready.then(async()=>{
   setTimeout(()=>{
     const ld=document.getElementById('loading');ld.classList.add('gone');setTimeout(()=>ld.remove(),1300);
     router();
-    // Ensure back button stays in the app on first press (Android PWA)
     if(!history.state?.aurora)history.pushState({aurora:'app'},'',location.href);
+    // Hero title blooms as loading fades
+    const ht=document.getElementById('hero-title');if(ht)ht.classList.add('bloom');
+    // First quote appears 400ms later
+    setTimeout(initQuotes,400);
   },2000);
 });
 </script>
