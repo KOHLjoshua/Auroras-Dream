@@ -409,9 +409,16 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 @media(max-width:768px){
   .note{position:relative !important;transform:none !important;width:100% !important;animation:none !important;margin-bottom:18px;}
   #board{padding:100px 14px 100px;}
-  .site-header{padding:15px 18px;}
-  #compass{bottom:18px;left:18px;} #write-btn{bottom:18px;right:18px;} #toast{right:18px;}
-  #stargaze-btn span{display:none;}
+  .site-header{padding:10px 12px;}
+  .hd-right{gap:5px;}
+  #compass{bottom:18px;left:18px;} #write-btn{bottom:18px;right:18px;} #toast{right:18px;bottom:90px;}
+  #stargaze-btn span,#search-btn span{display:none;}
+  #stargaze-btn,#search-btn,#notif-btn{padding:7px 9px;font-size:.85rem;}
+  .time-chip{display:none;}
+  .auth-open-btn{padding:7px 12px;font-size:.85rem;}
+  .user-chip{padding:6px 10px;font-size:.85rem;}
+  #search-bar{padding:64px 12px 12px;z-index:121;}
+  #search-bar.open{z-index:125;}
   #load-more-btn{position:relative !important;top:auto !important;left:auto !important;transform:none !important;display:block;margin:20px auto;width:fit-content;}
 }
 </style>
@@ -638,6 +645,7 @@ if (!DEMO_MODE && window.supabase)
 let currentUser    = null;
 let currentProfile = null;
 let authSelAv      = '🌙';
+let lastSignupEmail = '';
 
 // Phase 2 state
 const POSTS_PER_PAGE = 20;
@@ -732,7 +740,7 @@ function mapDbPosts(pData, rData, cData){
     cat:p.category, type:p.type,
     title:p.title||'', body:p.body, moods:p.moods||[],
     audioUrl:p.audio_url||null,
-    rxn:{'🌌':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌌').length,'✨':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='✨').length,'🌠':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌠').length,'🌙':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌙').length},
+    rxn:{'🌌':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌌').length,'✨':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='✨').length,'🌠':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌠').length,'🌙':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌙').length,'💫':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='💫').length,'🪐':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🪐').length,'🎵':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🎵').length,'🌊':(rData||[]).filter(r=>r.post_id===p.id&&r.emoji==='🌊').length},
     myRxn:myUid?(rData||[]).filter(r=>r.post_id===p.id&&r.user_id===myUid).map(r=>r.emoji):[],
     comments:(cData||[]).filter(c=>c.post_id===p.id).map(c=>({id:c.id,av:c.author.avatar,author:c.author.pen_name,text:c.body})),
     ts:timeAgo(new Date(p.created_at)),
@@ -748,8 +756,18 @@ async function initAuth(){
     if(session?.user){currentUser=session.user;currentProfile=await fetchProfile(session.user.id);}
     updateAuthUI();subscribeRealtime();
     sb.auth.onAuthStateChange(async(event,session)=>{
-      if(session?.user){currentUser=session.user;currentProfile=await fetchProfile(session.user.id);}
-      else{currentUser=null;currentProfile=null;}
+      if(session?.user){
+        currentUser=session.user;
+        currentProfile=await fetchProfile(session.user.id);
+        // If profile missing (user confirmed email from inbox), create it from stored metadata
+        if(!currentProfile&&event==='SIGNED_IN'){
+          const meta=session.user.user_metadata||{};
+          if(meta.pen_name){
+            const{error:pErr}=await sb.from('profiles').insert({id:session.user.id,pen_name:meta.pen_name,avatar:meta.avatar||'🌙',role:'writer'});
+            if(!pErr||pErr.message?.includes('duplicate'))currentProfile=await fetchProfile(session.user.id);
+          }
+        }
+      }else{currentUser=null;currentProfile=null;}
       updateAuthUI();
       if(event==='SIGNED_IN'||event==='SIGNED_OUT'){await loadPosts();subscribeRealtime();}
     });
@@ -1080,9 +1098,9 @@ async function publishPost(draft){
   if(!DEMO_MODE&&sb){
     const{data,error}=await sb.from('posts').insert({author_id:currentUser.id,title:draft.title||null,body:draft.body,type:draft.type,category:draft.category,moods:draft.moods,audio_url:audioUrl}).select('*,author:profiles!author_id(pen_name,avatar)').single();
     if(error){toast('something went wrong saving your note ✦');return;}
-    np={id:data.id,authorId:data.author_id,author:data.author.pen_name,av:data.author.avatar,cat:data.category,type:data.type,title:data.title||'',body:data.body,moods:data.moods||[],audioUrl:data.audio_url,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0},myRxn:[],comments:[],ts:'just now',sz:data.body.length>220?'l':data.body.length>80?'m':'s'};
+    np={id:data.id,authorId:data.author_id,author:data.author.pen_name,av:data.author.avatar,cat:data.category,type:data.type,title:data.title||'',body:data.body,moods:data.moods||[],audioUrl:data.audio_url,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0,'💫':0,'🪐':0,'🎵':0,'🌊':0},myRxn:[],comments:[],ts:'just now',sz:data.body.length>220?'l':data.body.length>80?'m':'s'};
   }else{
-    np={id:Date.now(),authorId:currentUser?.id||null,author:currentProfile?.pen_name||'you',av:currentProfile?.avatar||selAv,cat:draft.category,type:draft.type,title:draft.title,body:draft.body,moods:draft.moods,audioUrl:recPreviewUrl||null,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0},myRxn:[],comments:[],ts:'just now',sz:draft.body.length>220?'l':draft.body.length>80?'m':'s'};
+    np={id:Date.now(),authorId:currentUser?.id||null,author:currentProfile?.pen_name||'you',av:currentProfile?.avatar||selAv,cat:draft.category,type:draft.type,title:draft.title,body:draft.body,moods:draft.moods,audioUrl:recPreviewUrl||null,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0,'💫':0,'🪐':0,'🎵':0,'🌊':0},myRxn:[],comments:[],ts:'just now',sz:draft.body.length>220?'l':draft.body.length>80?'m':'s'};
   }
   posts.unshift(np);
   currentFilter='all';document.querySelectorAll('.cmp-item').forEach(x=>x.classList.remove('active'));document.querySelector('.cmp-item[data-f="all"]')?.classList.add('active');
@@ -1181,7 +1199,7 @@ document.getElementById('confirm-ok-btn').addEventListener('click',()=>{if(_conf
 const AVATARS=['🌙','🦊','🪶','🫖','⛵','🌿','🦋','🌸','🔮','🕯️','🌊','🍂'];
 const MOODS=['midnight thoughts','coffee shop','wandering','heavy heart','nostalgia','quiet joy','unfinished','rain','foggy morning','letters unsent','after the storm','soft light'];
 const CATS={fresh:'Fresh Whispers',deep:'Deep Dives',audio:'Audio Dreams',midnight:'Midnight Archives'};
-const RXN_EMOJIS=['🌌','✨','🌠','🌙'];
+const RXN_EMOJIS=['🌌','✨','🌠','🌙','💫','🪐','🎵','🌊'];
 
 function mkWaveform(){return Array.from({length:20},(_,i)=>{const h=6+Math.sin(i*.72)*8+Math.sin(i*.3)*4;return`<div class="wbar" style="height:${h}px;--wh:${Math.max(10,h+6)}px;--wd:${i*.045}s"></div>`;}).join('');}
 function mkStickers(moods){return moods.map((m,i)=>`<span class="sticker" style="--sr:${(i%2===0?-1:1)*(1+i*.8)}deg">${m}</span>`).join('');}
@@ -1460,6 +1478,27 @@ async function saveProfile(){
 // ── Router ────────────────────────────────────────────────────────
 function router(){
   const hash=location.hash.slice(1);
+  if(hash.startsWith('error=')){
+    const params=new URLSearchParams(hash);
+    history.replaceState(null,'',location.pathname);
+    if(params.get('error_code')==='otp_expired'&&!DEMO_MODE&&sb){
+      setTimeout(()=>{
+        openAuthModal('up');
+        document.getElementById('auth-panel-up').innerHTML=`<div class="auth-success" style="text-align:left;padding:4px 0"><div style="color:rgba(255,150,120,.9);font-size:1.05rem;margin-bottom:10px">✕ confirmation link expired</div><div style="font-size:.88rem;color:rgba(var(--tx-main),.55);margin-bottom:16px;line-height:1.6">Links expire after 1 hour. Enter your email to get a fresh one.</div><input class="m-field" id="resend-email-in" type="email" placeholder="your email address"><div class="auth-err" id="resend-err"></div><div class="m-actions"><button class="btn-c" id="resend-cancel">cancel</button><button class="btn-pub" id="resend-btn">send new link ✦</button></div></div>`;
+        document.getElementById('resend-cancel').addEventListener('click',closeAuthModal);
+        document.getElementById('resend-btn').addEventListener('click',async()=>{
+          const em=document.getElementById('resend-email-in').value.trim();
+          const errEl=document.getElementById('resend-err');errEl.textContent='';
+          if(!em){errEl.textContent='enter your email';return;}
+          const rb=document.getElementById('resend-btn');rb.disabled=true;rb.textContent='sending…';
+          const{error}=await sb.auth.resend({type:'signup',email:em});
+          if(error){errEl.textContent='could not resend — try signing up again';rb.disabled=false;rb.textContent='send new link ✦';}
+          else document.getElementById('auth-panel-up').innerHTML='<div class="auth-success">✦ new link sent<br><br><span style="font-size:.85rem;opacity:.6">check your inbox, then come back to sign in</span></div>';
+        });
+      },500);
+    }
+    return;
+  }
   if(!hash||hash==='home'){hideProfile();return;}
   if(hash.startsWith('profile/')){showProfile(decodeURIComponent(hash.slice(8)));return;}
   if(hash.startsWith('post/')){
@@ -1469,6 +1508,22 @@ function router(){
   }
 }
 window.addEventListener('hashchange',router);
+
+// ── Android back button: close open UI instead of exiting ────────
+window.addEventListener('popstate',()=>{
+  const closed=
+    (document.getElementById('confirm-dialog').classList.contains('open')&&(closeConfirm(),true))||
+    (document.getElementById('auth-modal').classList.contains('open')&&(closeAuthModal(),true))||
+    (document.getElementById('profile-edit-modal').classList.contains('open')&&(closeProfileEdit(),true))||
+    (document.getElementById('settings-modal').classList.contains('open')&&(closeSettingsModal(),true))||
+    (document.getElementById('edit-modal').classList.contains('open')&&(closeEditModal(),true))||
+    (document.getElementById('write-modal').classList.contains('open')&&(closeModal(),true))||
+    (document.getElementById('notif-panel').classList.contains('open')&&(closeNotifPanel(),true))||
+    (!!expandedEl&&(collapseNote(),true))||
+    (document.getElementById('mod-panel').classList.contains('vis')&&(closeModPanel(),true));
+  if(closed)history.pushState({aurora:'app'},'',location.href);
+  else router();
+});
 
 // Overlay
 overlay.addEventListener('click',()=>{
@@ -1599,9 +1654,14 @@ document.getElementById('su-btn').addEventListener('click',async()=>{
   btn.disabled=true;btn.textContent='finding your place…';
   const{data:taken}=await sb.from('profiles').select('id').eq('pen_name',name).maybeSingle();
   if(taken){errEl.textContent='this pen name is already taken';btn.disabled=false;btn.textContent='join the space ✦';return;}
-  const{data,error}=await sb.auth.signUp({email,password:pass});
+  const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{pen_name:name,avatar:authSelAv}}});
   if(error){errEl.textContent=friendlyErr(error.message);btn.disabled=false;btn.textContent='join the space ✦';return;}
-  if(data.user&&!data.user.confirmed_at&&!data.session){document.getElementById('auth-panel-up').innerHTML=`<div class="auth-success">check your inbox to confirm your account ✦<br><br><span style="font-size:.85rem;opacity:.6">then come back and sign in</span></div>`;btn.disabled=false;btn.textContent='join the space ✦';return;}
+  if(data.user&&!data.user.confirmed_at&&!data.session){
+    lastSignupEmail=email;
+    document.getElementById('auth-panel-up').innerHTML=`<div class="auth-success">✦ check your inbox<br><span style="font-size:.85rem;opacity:.6">confirmation sent to ${email}</span><br><br><button class="btn-c" id="resend-signup-btn" style="margin-top:4px;font-size:.85rem">resend email</button></div>`;
+    document.getElementById('resend-signup-btn').addEventListener('click',async()=>{const rb=document.getElementById('resend-signup-btn');rb.disabled=true;rb.textContent='sending…';const{error:re}=await sb.auth.resend({type:'signup',email:lastSignupEmail});if(re){rb.disabled=false;rb.textContent='resend failed — try again';}else rb.textContent='sent ✦';});
+    btn.disabled=false;btn.textContent='join the space ✦';return;
+  }
   if(data.user){const{error:pErr}=await sb.from('profiles').insert({id:data.user.id,pen_name:name,avatar:authSelAv,role:'writer'});if(pErr&&!pErr.message?.includes('duplicate')){errEl.textContent='account created — try signing in';btn.disabled=false;btn.textContent='join the space ✦';return;}}
   btn.disabled=false;btn.textContent='join the space ✦';closeAuthModal();toast(`welcome, ${name} ✦`);
 });
@@ -1653,7 +1713,12 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 
 document.fonts.ready.then(async()=>{
   await initAuth();await loadPosts();
-  setTimeout(()=>{const ld=document.getElementById('loading');ld.classList.add('gone');setTimeout(()=>ld.remove(),1300);router();},2000);
+  setTimeout(()=>{
+    const ld=document.getElementById('loading');ld.classList.add('gone');setTimeout(()=>ld.remove(),1300);
+    router();
+    // Ensure back button stays in the app on first press (Android PWA)
+    if(!history.state?.aurora)history.pushState({aurora:'app'},'',location.href);
+  },2000);
 });
 </script>
 </body>

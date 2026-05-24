@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS reactions (
   id       BIGSERIAL PRIMARY KEY,
   post_id  BIGINT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   user_id  UUID   NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  emoji    TEXT   NOT NULL CHECK (emoji IN ('🌌','✨','🌠','🌙')),
+  emoji    TEXT   NOT NULL CHECK (emoji IN ('🌌','✨','🌠','🌙','💫','🪐','🎵','🌊')),
   UNIQUE (post_id, user_id, emoji)
 );
 
@@ -159,3 +159,10 @@ ALTER PUBLICATION supabase_realtime ADD TABLE posts, reactions, comments;
 -- UPDATE profiles
 --   SET role = 'owner'
 -- WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
+
+-- ================================================================
+-- MIGRATION — Expand reaction emojis (run once on existing DBs)
+-- ================================================================
+-- ALTER TABLE reactions DROP CONSTRAINT reactions_emoji_check;
+-- ALTER TABLE reactions ADD CONSTRAINT reactions_emoji_check
+--   CHECK (emoji IN ('🌌','✨','🌠','🌙','💫','🪐','🎵','🌊'));
