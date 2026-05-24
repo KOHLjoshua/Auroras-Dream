@@ -1,12 +1,13 @@
 // Aurora Notes — Service Worker
 // Cache strategy: cache-first for static assets, network-first for API calls
 
-const CACHE = 'aurora-v1';
+const CACHE = 'aurora-v2';
 const STATIC = [
   '/',
   '/index.html',
   '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Caveat:wght@400;600;700&display=swap'
+  '/config.js',
+  'https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Caveat:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;1,400&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Philosopher:ital@0;1&family=Lora:ital,wght@0,400;1,400&family=Raleway:wght@100;200&display=swap'
 ];
 
 self.addEventListener('install', e => {

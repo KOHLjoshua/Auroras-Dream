@@ -1692,6 +1692,7 @@ document.getElementById('su-btn').addEventListener('click',async()=>{
   if(!sb)return;const name=document.getElementById('su-name').value.trim(),email=document.getElementById('su-email').value.trim(),pass=document.getElementById('su-pass').value;
   const errEl=document.getElementById('su-err'),btn=document.getElementById('su-btn');errEl.textContent='';
   if(!name){errEl.textContent='you need a pen name';return;}if(name.length<2){errEl.textContent='pen name must be at least 2 characters';return;}if(!email){errEl.textContent='email is required';return;}if(pass.length<8){errEl.textContent='password needs at least 8 characters';return;}
+  try{
   btn.disabled=true;btn.textContent='finding your place…';
   const{data:taken}=await sb.from('profiles').select('id').eq('pen_name',name).maybeSingle();
   if(taken){errEl.textContent='this pen name is already taken';btn.disabled=false;btn.textContent='join the space ✦';return;}
@@ -1704,7 +1705,9 @@ document.getElementById('su-btn').addEventListener('click',async()=>{
     btn.disabled=false;btn.textContent='join the space ✦';return;
   }
   if(data.user){const{error:pErr}=await sb.from('profiles').insert({id:data.user.id,pen_name:name,avatar:authSelAv,role:'writer'});if(pErr&&!pErr.message?.includes('duplicate')){errEl.textContent='account created — try signing in';btn.disabled=false;btn.textContent='join the space ✦';return;}}
+  if(data.session){currentUser=data.user;currentProfile={id:data.user.id,pen_name:name,avatar:authSelAv,role:'writer',bio:null,created_at:new Date().toISOString()};updateAuthUI();}
   btn.disabled=false;btn.textContent='join the space ✦';closeAuthModal();toast(`welcome, ${name} ✦`);
+  }catch(e){console.error('signup:',e);errEl.textContent='something went wrong — try again';btn.disabled=false;btn.textContent='join the space ✦';}
 });
 
 // ── Notification button ───────────────────────────────────────────
