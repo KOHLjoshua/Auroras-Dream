@@ -301,16 +301,16 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #search-bar{position:fixed;top:0;left:0;right:0;z-index:113;padding:68px 36px 16px;background:linear-gradient(to bottom,rgba(0,0,0,.78) 0%,rgba(0,0,0,.5) 100%);backdrop-filter:blur(20px);transform:translateY(-110%);transition:transform .38s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
 #search-bar.open{transform:translateY(0);pointer-events:all;}
 .srch-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-#search-input{flex:1;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.14);border-radius:24px;padding:9px 18px;font-family:'Crimson Pro',serif;font-size:1rem;color:rgba(var(--tx-main),1);outline:none;transition:border-color .2s;}
-#search-input:focus{border-color:rgba(var(--tx-main),.32);}
-#search-input::placeholder{color:rgba(var(--tx-main),.3);}
-#search-close-btn{padding:8px 16px;border-radius:20px;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.12);font-family:'Caveat',cursive;font-size:.88rem;color:rgba(var(--tx-main),.6);cursor:pointer;transition:all .2s ease;white-space:nowrap;flex-shrink:0;}
-#search-close-btn:hover{background:rgba(var(--tx-main),.13);}
+#search-input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:9px 18px;font-family:'Crimson Pro',serif;font-size:1rem;color:rgba(255,255,255,.92);outline:none;transition:border-color .2s;}
+#search-input:focus{border-color:rgba(255,255,255,.4);}
+#search-input::placeholder{color:rgba(255,255,255,.35);}
+#search-close-btn{padding:8px 16px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);font-family:'Caveat',cursive;font-size:.88rem;color:rgba(255,255,255,.65);cursor:pointer;transition:all .2s ease;white-space:nowrap;flex-shrink:0;}
+#search-close-btn:hover{background:rgba(255,255,255,.16);}
 .srch-tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
-.srch-tag{font-family:'Caveat',cursive;font-size:.76rem;padding:3px 11px;border-radius:20px;border:1px dashed rgba(var(--tx-main),.2);background:transparent;color:rgba(var(--tx-main),.52);cursor:pointer;transition:all .18s ease;}
-.srch-tag:hover{border-color:rgba(var(--tx-main),.38);color:rgba(var(--tx-main),.8);}
-.srch-tag.on{border-style:solid;border-color:var(--aur-1);color:rgba(var(--tx-main),.95);background:rgba(0,245,160,.08);}
-.srch-count{font-family:'Caveat',cursive;font-size:.8rem;color:rgba(var(--tx-main),.36);letter-spacing:.04em;min-height:16px;}
+.srch-tag{font-family:'Caveat',cursive;font-size:.76rem;padding:3px 11px;border-radius:20px;border:1px dashed rgba(255,255,255,.22);background:transparent;color:rgba(255,255,255,.55);cursor:pointer;transition:all .18s ease;}
+.srch-tag:hover{border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.85);}
+.srch-tag.on{border-style:solid;border-color:var(--aur-1);color:#fff;background:rgba(0,245,160,.12);}
+.srch-count{font-family:'Caveat',cursive;font-size:.8rem;color:rgba(255,255,255,.4);letter-spacing:.04em;min-height:16px;}
 
 /* ── Search icon in header ── */
 #search-btn{display:flex;align-items:center;gap:7px;padding:8px 18px;background:rgba(var(--tx-main),.06);border:1px solid rgba(var(--tx-main),.12);border-radius:24px;backdrop-filter:blur(16px);cursor:pointer;font-family:'Caveat',cursive;font-size:.95rem;color:rgba(var(--tx-main),.8);transition:all .25s ease;}
@@ -422,9 +422,9 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 
 <canvas id="bg-canvas"></canvas>
 <canvas id="ptx-canvas"></canvas>
-<div id="overlay"></div>
 
 <div id="app">
+  <div id="overlay"></div>
   <header class="site-header">
     <div class="hd-left">
       <div class="site-title">Aurora Notes</div>
