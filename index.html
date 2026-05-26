@@ -420,6 +420,13 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
   #search-bar{padding:64px 12px 12px;z-index:121;}
   #search-bar.open{z-index:125;}
   #load-more-btn{position:relative !important;top:auto !important;left:auto !important;transform:none !important;display:block;margin:20px auto;width:fit-content;}
+  /* ── expanded note: full-screen sheet on mobile ── */
+  .note.expanded{top:0 !important;left:0 !important;transform:none !important;width:100% !important;max-height:100vh !important;max-height:100dvh !important;border-radius:0 !important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:54px !important;}
+  /* keep action buttons pinned to viewport so they never scroll away */
+  .note.expanded .note-close{position:fixed;top:14px;right:14px;}
+  .note.expanded .note-share{position:fixed;top:14px;right:48px;}
+  /* lock background page while note is open */
+  body.note-open{overflow:hidden;}
 }
 
 /* ══════════════════════════════════════════
@@ -1349,9 +1356,11 @@ function expandNote(el){
   if(expandedEl)collapseNote();
   const rect=el.getBoundingClientRect();el.style.position='fixed';el.style.left=`${rect.left}px`;el.style.top=`${rect.top}px`;el.style.width=`${rect.width}px`;el.style.zIndex='220';
   requestAnimationFrame(()=>{el.classList.add('expanded');overlay.classList.add('on');});expandedEl=el;
+  if(window.innerWidth<=768)document.body.classList.add('note-open');
 }
 function collapseNote(){
   if(!expandedEl)return;const el=expandedEl;el.classList.remove('expanded');
+  document.body.classList.remove('note-open');
   if(!anyModalOpen())overlay.classList.remove('on');
   const pid=parseInt(el.dataset.id),post=posts.find(p=>p.id===pid),idx=posts.indexOf(post);
   setTimeout(()=>{if(window.innerWidth>768&&post){const pos=stablePos(pid,idx);el.style.position='absolute';el.style.left=`${pos.x}px`;el.style.top=`${pos.y}px`;el.style.width='';el.style.transform=`rotate(${pos.rot}deg)`;el.style.zIndex='10';}expandedEl=null;},420);
