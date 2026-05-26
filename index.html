@@ -736,8 +736,9 @@ function drawBg(ts){
   const g=bgX.createLinearGradient(0,0,0,BH);g.addColorStop(0,`rgb(${p.bgDeep})`);g.addColorStop(1,`rgb(${p.bgMid})`);bgX.fillStyle=g;bgX.fillRect(0,0,BW,BH);
   if(tod!=='day'){const sa=tod==='dawn'?.32:.82;STARS.forEach(s=>{const tw=.4+.6*(.5+.5*Math.sin(ts*.0009+s.tw));bgX.beginPath();bgX.arc(s.x*BW,s.y*BH,s.r,0,6.28);bgX.fillStyle=`rgba(255,255,255,${tw*sa})`;bgX.fill();});}
   bgX.save();bgX.globalCompositeOperation='screen';
+  const auroraSp=tod==='day'?1:.1;
   RIBBONS.forEach(rb=>{
-    const pts=[];for(let i=0;i<=70;i++){const x=(i/70)*BW,y=(rb.by+Math.sin(i*.09+ts*rb.sp*1000+rb.ph)*.6*rb.amp+Math.sin(i*.045+ts*rb.sp*500+rb.ph*1.8)*.4*rb.amp)*BH;pts.push({x,y});}
+    const pts=[];for(let i=0;i<=70;i++){const x=(i/70)*BW,y=(rb.by+Math.sin(i*.09+ts*rb.sp*1000*auroraSp+rb.ph)*.6*rb.amp+Math.sin(i*.045+ts*rb.sp*500*auroraSp+rb.ph*1.8)*.4*rb.amp)*BH;pts.push({x,y});}
     const ga=bgX.createLinearGradient(0,0,BW,0);const al=tod==='day'?.03:tod==='dawn'?.09:.065;
     ga.addColorStop(0,`rgba(${PAL[tod].a1},0)`);ga.addColorStop(.2,`rgba(${PAL[tod].a1},${al})`);ga.addColorStop(.5,`rgba(${PAL[tod].a2},${al*1.3})`);ga.addColorStop(.8,`rgba(${PAL[tod].a3},${al*.8})`);ga.addColorStop(1,`rgba(${PAL[tod].a1},0)`);
     bgX.beginPath();bgX.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length-2;i++){const mx=(pts[i].x+pts[i+1].x)/2,my=(pts[i].y+pts[i+1].y)/2;bgX.quadraticCurveTo(pts[i].x,pts[i].y,mx,my);}
@@ -801,20 +802,19 @@ async function initAuth(){
   if(DEMO_MODE||!sb){ document.getElementById('demo-banner').classList.add('vis'); updateAuthUI(); return; }
   try{
     const{data:{session}}=await sb.auth.getSession();
-    if(session?.user){currentUser=session.user;currentProfile=await fetchProfile(session.user.id);}
+    if(session?.user){
+      currentUser=session.user;
+      currentProfile=await fetchProfile(session.user.id);
+      if(!currentProfile)currentProfile=await ensureProfile(session.user);
+    }
     updateAuthUI();subscribeRealtime();
     sb.auth.onAuthStateChange(async(event,session)=>{
       if(session?.user){
         currentUser=session.user;
         currentProfile=await fetchProfile(session.user.id);
-        // If profile missing (user confirmed email from inbox), create it from stored metadata
-        if(!currentProfile&&event==='SIGNED_IN'){
-          const meta=session.user.user_metadata||{};
-          if(meta.pen_name){
-            const{error:pErr}=await sb.from('profiles').insert({id:session.user.id,pen_name:meta.pen_name,avatar:meta.avatar||'🌙',role:'writer'});
-            if(!pErr||pErr.message?.includes('duplicate'))currentProfile=await fetchProfile(session.user.id);
-          }
-        }
+        // Create profile on SIGNED_IN or INITIAL_SESSION (covers email-confirmation redirect)
+        if(!currentProfile&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))
+          currentProfile=await ensureProfile(session.user);
       }else{currentUser=null;currentProfile=null;}
       updateAuthUI();
       if(event==='SIGNED_IN'||event==='SIGNED_OUT'){await loadPosts();subscribeRealtime();}
@@ -822,6 +822,15 @@ async function initAuth(){
   }catch(e){console.error('initAuth:',e);updateAuthUI();}
 }
 async function fetchProfile(uid){if(!sb)return null;const{data}=await sb.from('profiles').select('*').eq('id',uid).maybeSingle();return data;}
+async function ensureProfile(user){
+  const meta=user.user_metadata||{};
+  if(!meta.pen_name)return null;
+  const{error:pErr}=await sb.from('profiles').insert({id:user.id,pen_name:meta.pen_name,avatar:meta.avatar||'🌙',role:'writer'});
+  if(pErr&&!pErr.message?.includes('duplicate'))console.warn('profile insert:',pErr.message);
+  const fetched=await fetchProfile(user.id);
+  // If SELECT policy is missing, fall back to metadata so UI still shows the user's name
+  return fetched||{id:user.id,pen_name:meta.pen_name,avatar:meta.avatar||'🌙',role:'writer',bio:null,created_at:new Date().toISOString()};
+}
 function updateAuthUI(){
   const el=document.getElementById('hd-auth');if(!el)return;
   if(currentProfile){
@@ -1136,6 +1145,11 @@ async function uploadAudio(blob,userId){
 
 async function publishPost(draft){
   if(!DEMO_MODE&&!currentUser){closeModal();openAuthModal('in');toast('sign in to share your thoughts ✦');return;}
+  // Ensure session is still live before attempting the insert
+  if(!DEMO_MODE&&sb){
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){closeModal();openAuthModal('in');toast('session expired — please sign in again ✦');return;}
+  }
   let audioUrl=null;
   if(draft.type==='audio'&&recBlob&&!DEMO_MODE&&sb){
     const btn=document.getElementById('pub-btn');btn.textContent='uploading audio…';
@@ -1144,9 +1158,22 @@ async function publishPost(draft){
   }
   let np;
   if(!DEMO_MODE&&sb){
-    const{data,error}=await sb.from('posts').insert({author_id:currentUser.id,title:draft.title||null,body:draft.body,type:draft.type,category:draft.category,moods:draft.moods,audio_url:audioUrl}).select('*,author:profiles!author_id(pen_name,avatar)').single();
+    // Use local profile data instead of a JOIN — avoids hanging when profiles SELECT is slow/blocked
+    const prof=currentProfile||{pen_name:'writer',avatar:'🌙'};
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000));
+    let result;
+    try{
+      result=await Promise.race([
+        sb.from('posts').insert({author_id:currentUser.id,title:draft.title||null,body:draft.body,type:draft.type,category:draft.category,moods:draft.moods,audio_url:audioUrl}).select('id,created_at,body,type,category,moods,audio_url,title').single(),
+        timeout
+      ]);
+    }catch(e){
+      toast(e.message==='timeout'?'taking too long — check your connection and try again ✦':'something went wrong saving your note ✦');
+      return;
+    }
+    const{data,error}=result;
     if(error){toast('something went wrong saving your note ✦');return;}
-    np={id:data.id,authorId:data.author_id,author:data.author.pen_name,av:data.author.avatar,cat:data.category,type:data.type,title:data.title||'',body:data.body,moods:data.moods||[],audioUrl:data.audio_url,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0,'💫':0,'🪐':0,'🎵':0,'🌊':0},myRxn:[],comments:[],ts:'just now',sz:data.body.length>220?'l':data.body.length>80?'m':'s'};
+    np={id:data.id,authorId:currentUser.id,author:prof.pen_name,av:prof.avatar,cat:data.category,type:data.type,title:data.title||'',body:data.body,moods:data.moods||[],audioUrl:data.audio_url,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0,'💫':0,'🪐':0,'🎵':0,'🌊':0},myRxn:[],comments:[],ts:'just now',sz:data.body.length>220?'l':data.body.length>80?'m':'s'};
   }else{
     np={id:Date.now(),authorId:currentUser?.id||null,author:currentProfile?.pen_name||'you',av:currentProfile?.avatar||selAv,cat:draft.category,type:draft.type,title:draft.title,body:draft.body,moods:draft.moods,audioUrl:recPreviewUrl||null,rxn:{'🌌':0,'✨':0,'🌠':0,'🌙':0,'💫':0,'🪐':0,'🎵':0,'🌊':0},myRxn:[],comments:[],ts:'just now',sz:draft.body.length>220?'l':draft.body.length>80?'m':'s'};
   }
@@ -1219,6 +1246,8 @@ async function saveEdit(){
   const post=posts.find(p=>p.id===editingPostId);if(!post)return;
   const btn=document.getElementById('edit-save-btn');btn.disabled=true;btn.textContent='saving…';
   if(!DEMO_MODE&&sb){
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){btn.disabled=false;btn.textContent='save changes ✦';closeEditModal();openAuthModal('in');toast('session expired — please sign in again ✦');return;}
     const{error}=await sb.from('posts').update({title:title||null,body,moods:editAddedMoods}).eq('id',editingPostId);
     if(error){toast('could not save changes ✦');btn.disabled=false;btn.textContent='save changes ✦';return;}
   }
@@ -1228,7 +1257,12 @@ async function saveEdit(){
   closeEditModal();collapseNote();render();toast('note updated ✦');
 }
 async function deletePost(postId){
-  if(!DEMO_MODE&&sb){const{error}=await sb.from('posts').delete().eq('id',postId);if(error){toast('could not delete this note ✦');return;}}
+  if(!DEMO_MODE&&sb){
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){openAuthModal('in');toast('session expired — please sign in again ✦');return;}
+    const{error}=await sb.from('posts').delete().eq('id',postId);
+    if(error){toast('could not delete this note ✦');return;}
+  }
   posts=posts.filter(p=>p.id!==postId);delete posCache[postId];collapseNote();render();toast('note removed from the space ✦');
 }
 
