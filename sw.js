@@ -1,7 +1,7 @@
-// Aurora Notes — Service Worker
+// In the Hand of Dante — Service Worker
 // Cache strategy: cache-first for static assets, network-first for API calls
 
-const CACHE = 'aurora-v2';
+const CACHE = 'aurora-v3';
 const STATIC = [
   '/',
   '/index.html',

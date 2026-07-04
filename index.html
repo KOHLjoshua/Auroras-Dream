@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aurora Notes — your inner world matters and deserves space</title>
+<title>In the Hand of Dante — your inner world matters and deserves space</title>
 <meta name="description" content="A creative writing sanctuary for poems, stories, thoughts, and audio recordings.">
 <meta name="theme-color" content="#00f5a0">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -397,6 +397,12 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 .ld-bar{width:190px;height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;}
 .ld-fill{height:100%;border-radius:1px;background:linear-gradient(90deg,#00f5a0,#7b2ff7);animation:ld-fill 2.4s ease forwards;}
 @keyframes ld-fill{from{width:0%}to{width:100%}}
+.ld-art{width:172px;height:auto;animation:ld-bob 3.2s ease-in-out infinite;}
+.ld-art .pg{transform-origin:0 0;animation:pg-flip 2.1s ease-in-out infinite;}
+.ld-art .pg2{animation-delay:.7s;}
+.ld-art .pg3{animation-delay:1.4s;}
+@keyframes pg-flip{0%{transform:scaleX(1);opacity:1;}60%{transform:scaleX(-1);opacity:.7;}75%,100%{transform:scaleX(-1);opacity:0;}}
+@keyframes ld-bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
 @keyframes ld-glow{0%{text-shadow:0 0 18px rgba(0,245,160,.3);}33%{text-shadow:0 0 44px rgba(0,245,160,.75),0 0 90px rgba(123,47,247,.4);}66%{text-shadow:0 0 38px rgba(255,0,110,.45),0 0 70px rgba(0,245,160,.35);}100%{text-shadow:0 0 18px rgba(0,245,160,.3);}}
 .empty-state{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
 .empty-state div:first-child{font-size:2.5rem;opacity:.35;}
@@ -436,6 +442,9 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 #hero-title{font-family:'Caveat',cursive;font-size:clamp(2rem,4.5vw,3.4rem);font-weight:700;color:rgba(var(--tx-main),1);text-shadow:0 0 40px var(--glow),0 0 80px rgba(0,245,160,.12);letter-spacing:.04em;line-height:1.1;margin-bottom:20px;opacity:0;transition:none;}
 #hero-title.bloom{animation:title-bloom 2.2s cubic-bezier(.22,1,.36,1) forwards;}
 @keyframes title-bloom{from{opacity:0;filter:blur(14px);letter-spacing:.24em;}to{opacity:1;filter:blur(0);letter-spacing:.04em;}}
+#hero-art{width:clamp(170px,24vw,260px);height:auto;display:block;margin:2px auto 18px;border-radius:26px;box-shadow:0 24px 60px rgba(0,0,0,.35);opacity:0;animation:art-in 1.6s ease .25s forwards,art-float 7s ease-in-out 2s infinite;}
+@keyframes art-in{to{opacity:1;}}
+@keyframes art-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
 
 /* ── Whisper quote ── */
 #quote-area{position:relative;max-width:520px;margin:0 auto;min-height:72px;display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:all;cursor:default;}
@@ -446,12 +455,40 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 @keyframes quote-appear{from{opacity:0;transform:translateY(10px);filter:blur(4px);}to{opacity:1;transform:translateY(0);filter:blur(0);}}
 @keyframes aurora-brush{0%,100%{text-shadow:none;}35%{text-shadow:0 0 18px rgba(0,245,160,.5),0 0 38px rgba(123,47,247,.22);}65%{text-shadow:0 0 26px rgba(0,245,160,.42),0 0 52px rgba(255,0,110,.18);}}
 
-@media(max-width:768px){#hero{padding:68px 20px 24px;}#hero-title{font-size:2rem;margin-bottom:14px;}#quote-text{font-size:.96rem;}}
+@media(max-width:768px){#hero{padding:68px 20px 24px;}#hero-title{font-size:2rem;margin-bottom:14px;}#hero-art{width:150px;margin-bottom:12px;}#quote-text{font-size:.96rem;}}
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="ld-title">Hey Aurora 🤗</div><div class="ld-sub">finding the light…</div><div class="ld-bar"><div class="ld-fill"></div></div></div>
+<div id="loading">
+  <svg class="ld-art" viewBox="0 0 220 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A hand holding an open book with turning pages">
+    <!-- sleeve -->
+    <path d="M82 190 L82 162 Q84 142 110 142 Q136 142 138 162 L138 190 Z" fill="#e8432c"/>
+    <!-- fingers peeking above palm -->
+    <rect x="90" y="110" width="7" height="18" rx="3.5" fill="#f4b48e"/>
+    <rect x="100" y="107" width="7" height="20" rx="3.5" fill="#f4b48e"/>
+    <rect x="110" y="107" width="7" height="20" rx="3.5" fill="#f4b48e"/>
+    <rect x="120" y="110" width="7" height="18" rx="3.5" fill="#f4b48e"/>
+    <!-- open palm -->
+    <path d="M80 146 Q80 126 98 122 L122 122 Q140 126 140 146 Q126 158 110 158 Q94 158 80 146 Z" fill="#f4b48e"/>
+    <ellipse cx="82" cy="134" rx="6" ry="10" transform="rotate(22 82 134)" fill="#f4b48e"/>
+    <!-- book: yellow cover -->
+    <path d="M48 82 L110 100 L172 82 L172 92 L110 110 L48 92 Z" fill="#f2b21b"/>
+    <!-- static pages -->
+    <path d="M110 98 C92 84 68 78 50 84 L50 72 C70 64 94 70 110 84 Z" fill="#fff" stroke="#1d1d28" stroke-width="1.5"/>
+    <path d="M110 98 C128 84 152 78 170 84 L170 72 C150 64 126 70 110 84 Z" fill="#fff" stroke="#1d1d28" stroke-width="1.5"/>
+    <path d="M60 79 C74 73 92 76 103 84 M60 85 C74 79 92 82 103 90" stroke="#1d1d28" stroke-width="1.1" fill="none" opacity=".55"/>
+    <path d="M160 79 C146 73 128 76 117 84 M160 85 C146 79 128 82 117 90" stroke="#1d1d28" stroke-width="1.1" fill="none" opacity=".55"/>
+    <!-- flipping pages (coords relative to spine so scaleX flips around it) -->
+    <g transform="translate(110 90)">
+      <path class="pg pg3" d="M0 6 C16 -7 38 -12 56 -7 L56 -17 C38 -24 16 -19 0 -6 Z" fill="#fff" opacity=".95"/>
+      <path class="pg pg2" d="M0 6 C16 -7 38 -12 56 -7 L56 -17 C38 -24 16 -19 0 -6 Z" fill="#fff" opacity=".95"/>
+      <path class="pg" d="M0 6 C16 -7 38 -12 56 -7 L56 -17 C38 -24 16 -19 0 -6 Z" fill="#fff" opacity=".95"/>
+    </g>
+    <!-- spine -->
+    <path d="M110 84 L110 98" stroke="#1d1d28" stroke-width="1.5"/>
+  </svg>
+  <div class="ld-title">In the Hand of Dante</div><div class="ld-sub">opening the pages…</div><div class="ld-bar"><div class="ld-fill"></div></div></div>
 
 <canvas id="bg-canvas"></canvas>
 <canvas id="ptx-canvas"></canvas>
@@ -484,7 +521,66 @@ body{min-height:100vh;overflow-x:hidden;font-family:'Crimson Pro',Georgia,serif;
 
   <!-- Hero title + whisper quotes -->
   <div id="hero">
-    <div id="hero-title">Aurora to the World</div>
+    <div id="hero-title">In the Hand of Dante</div>
+    <svg id="hero-art" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dante in a red cloak holding an open book in his outstretched hand">
+      <rect width="520" height="520" rx="26" fill="#dfe9fb"/>
+      <!-- white blob backdrop -->
+      <path d="M132 240 C104 184 138 106 202 88 C244 76 276 88 316 78 C372 64 428 88 444 140 C458 186 438 226 448 266 C458 304 434 340 392 346 C356 351 326 336 288 342 C242 350 188 354 156 322 C132 298 144 268 132 240 Z" fill="#fff"/>
+      <!-- confetti -->
+      <g stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M80 80 l10 10 M90 80 l-10 10" stroke="#4353e8"/>
+        <path d="M434 66 l10 10 M444 66 l-10 10" stroke="#e8432c"/>
+        <path d="M92 388 l10 10 M102 388 l-10 10" stroke="#f2b21b"/>
+        <path d="M448 366 l10 10 M458 366 l-10 10" stroke="#4353e8"/>
+        <path d="M298 34 l9 9 M307 34 l-9 9" stroke="#f2b21b"/>
+      </g>
+      <path d="M62 214 l14 6 -10 10 Z" fill="#4353e8"/>
+      <path d="M446 178 l14 6 -10 10 Z" fill="#e8432c"/>
+      <path d="M382 40 l12 5 -8 9 Z" fill="#f2b21b"/>
+      <circle cx="430" cy="262" r="4" fill="#4353e8"/>
+      <circle cx="74" cy="318" r="4" fill="#e8432c"/>
+      <circle cx="486" cy="418" r="4" fill="#f2b21b"/>
+      <!-- ground shadow -->
+      <ellipse cx="255" cy="484" rx="115" ry="12" fill="#c7d7f4"/>
+      <!-- cape lining behind right side -->
+      <path d="M320 180 L368 210 L352 400 L316 372 Z" fill="#23232e"/>
+      <!-- brown under-robe -->
+      <path d="M214 296 L302 296 L316 452 L204 452 Z" fill="#8f4a34"/>
+      <path d="M240 320 L236 444 M262 316 L262 448 M284 320 L290 444" stroke="#3a2018" stroke-width="1.4" fill="none" opacity=".5"/>
+      <!-- boots -->
+      <path d="M226 444 L220 470 Q218 482 230 482 L252 482 L254 444 Z" fill="#4353e8"/>
+      <path d="M290 444 L296 470 Q298 482 286 482 L264 482 L262 444 Z" fill="#4353e8"/>
+      <!-- red cloak -->
+      <path d="M256 144 C224 146 198 162 186 190 C168 232 156 286 146 336 C140 368 132 398 142 418 Q150 432 164 422 Q176 412 188 424 Q200 436 212 424 Q222 414 232 424 L238 428 C260 434 288 430 306 416 C322 402 332 380 336 352 L344 232 C348 196 322 158 288 148 C278 145 266 143 256 144 Z" fill="#e8432c"/>
+      <path d="M232 190 C224 260 220 330 224 400 M258 176 C252 256 250 330 254 408 M282 178 C282 250 284 320 288 396 M204 220 C194 280 186 340 184 402" stroke="#1d1d28" stroke-width="1.4" fill="none" opacity=".45"/>
+      <!-- extended arm -->
+      <path d="M300 168 C324 156 352 148 378 146 L382 168 C356 172 332 182 312 196 Z" fill="#e8432c"/>
+      <path d="M336 172 L352 212 L322 196 Z" fill="#e8432c"/>
+      <path d="M340 176 L350 206" stroke="#1d1d28" stroke-width="1.2" fill="none" opacity=".45"/>
+      <!-- open hand -->
+      <path d="M378 148 Q380 136 392 132 L398 118 Q401 112 404 118 L404 130 L410 116 Q413 110 417 117 L414 132 Q422 134 424 142 Q424 154 410 158 Q392 162 380 158 Z" fill="#f4b48e"/>
+      <!-- book -->
+      <g transform="rotate(-10 420 100)">
+        <path d="M362 96 L420 112 L478 96 L478 106 L420 122 L362 106 Z" fill="#f2b21b"/>
+        <path d="M420 110 C402 96 380 90 364 96 L364 82 C382 74 404 80 420 94 Z" fill="#fff" stroke="#1d1d28" stroke-width="1.4"/>
+        <path d="M420 110 C438 96 460 90 476 96 L476 82 C458 74 436 80 420 94 Z" fill="#fff" stroke="#1d1d28" stroke-width="1.4"/>
+        <path d="M372 88 C384 82 400 85 412 93 M372 94 C384 88 400 91 412 99 M468 88 C456 82 440 85 428 93 M468 94 C456 88 440 91 428 99" stroke="#1d1d28" stroke-width="1.1" fill="none" opacity=".55"/>
+        <path d="M420 94 L420 110" stroke="#1d1d28" stroke-width="1.4"/>
+      </g>
+      <!-- head: face profile -->
+      <path d="M250 96 C262 88 276 92 282 104 C286 110 288 118 292 124 L284 128 Q288 132 284 136 Q286 140 280 144 C272 152 258 152 252 144 Z" fill="#f4b48e"/>
+      <path d="M272 116 Q277 120 282 117" stroke="#1d1d28" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M270 108 Q277 106 283 110" stroke="#1d1d28" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <!-- hood -->
+      <path d="M244 122 C238 92 258 72 282 78 C298 82 304 98 298 110 C294 100 284 92 272 92 C258 92 248 104 248 122 Z" fill="#e8432c"/>
+      <!-- laurel leaves -->
+      <ellipse cx="252" cy="92" rx="7" ry="3.5" transform="rotate(-40 252 92)" fill="#4353e8"/>
+      <ellipse cx="264" cy="82" rx="7" ry="3.5" transform="rotate(-15 264 82)" fill="#4353e8"/>
+      <ellipse cx="278" cy="80" rx="7" ry="3.5" transform="rotate(10 278 80)" fill="#4353e8"/>
+      <!-- hand pinching cloak -->
+      <path d="M252 258 Q262 250 272 258 L274 276 Q268 286 258 282 L252 272 Z" fill="#f4b48e"/>
+      <path d="M258 262 L258 276 M266 261 L266 277" stroke="#1d1d28" stroke-width="1.1" fill="none" opacity=".45"/>
+    </svg>
     <div id="quote-area" role="region" aria-label="Daily whisper">
       <div id="quote-glyph">✦</div>
       <div id="quote-text"></div>
@@ -858,7 +954,7 @@ function addNotif(icon,msg){
   const btn=document.getElementById('notif-btn');
   if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),650);}
   // Browser notification if permitted
-  if(Notification?.permission==='granted')new Notification('Aurora Notes',{body:msg.replace(/<[^>]*>/g,''),icon:'',silent:true});
+  if(Notification?.permission==='granted')new Notification('In the Hand of Dante',{body:msg.replace(/<[^>]*>/g,''),icon:'',silent:true});
 }
 function updateNotifBadge(){
   const badge=document.getElementById('notif-badge');if(!badge)return;

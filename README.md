@@ -1,4 +1,4 @@
-# Aurora Notes
+# In the Hand of Dante
 
 > *your inner world matters and deserves space*
 
